@@ -8,7 +8,15 @@
 #' @param A Binary treatment indicator (0/1).
 #' @param X Optional covariate matrix.
 #' @param type Outcome type: \code{"continuous"}, \code{"binary"}, or \code{"poisson"}.
-#'
+#' @param quantile.range Numeric vector of probabilities in (0,1) specifying
+#'   which quantiles to report of the ratio
+#'   \eqn{\alpha_{t=0}(y,x) / \alpha_{t=-1}(y,x)}, evaluated at
+#'   \eqn{y \in \{Y_{t=0}, Y_{t=-1}\}} among treated units (\eqn{A=1})
+#'   and observed \eqn{x}. Defaults to \code{c(0.025, 0.975)},
+#'   corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
+#'   range that summarizes the plausible spread of the sensitivity
+#'   parameter ratio across outcome values and covariate values.
+#'   
 #' @return A named numeric vector of quantiles of the sensitivity parameter ratio.
 #' @export
 UDID_Parametric_SensPara <- function(Yn1,
@@ -16,7 +24,7 @@ UDID_Parametric_SensPara <- function(Yn1,
                                      A,
                                      X    = NULL,
                                      type = "continuous",
-                                     quantile.range = seq(0,1,by=0.005)) {
+                                     quantile.range = c(0.025,0.975)) {
   
   ## Dispatch to no-covariate version if X is NULL
   if (is.null(X)) {
@@ -134,6 +142,14 @@ UDID_Parametric_SensPara <- function(Yn1,
 #' @param A Binary treatment indicator (0/1).
 #' @param X Optional covariate matrix.
 #' @param type Outcome type: \code{"continuous"} or \code{"binary"}.
+#' @param quantile.range Numeric vector of probabilities in (0,1) specifying
+#'   which quantiles to report of the ratio
+#'   \eqn{\alpha_{t=0}(y,x) / \alpha_{t=-1}(y,x)}, evaluated at
+#'   \eqn{y \in \{Y_{t=0}, Y_{t=-1}\}} among treated units (\eqn{A=1})
+#'   and observed \eqn{x}. Defaults to \code{c(0.025, 0.975)},
+#'   corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
+#'   range that summarizes the plausible spread of the sensitivity
+#'   parameter ratio across outcome values and covariate values.
 #' @param seed Random seed.
 #' @param hyperparameter Hyperparameter tuning \code{"fast"} or \code{"slow"}.
 #' @param SL.hpara Super Learner hyperparameters.
@@ -145,7 +161,7 @@ UDID_Nonparametric_SensPara <- function(Yn1,
                                         A,
                                         X         = NULL,
                                         type      = "continuous",
-                                        quantile.range = seq(0,1,by=0.005),
+                                        quantile.range = c(0.025,0.975),
                                         seed      = 42,
                                         hyperparameter = "fast",
                                         SL.hpara  = list(SLL      = c(1),
@@ -308,7 +324,7 @@ UDID_Parametric_NoX_SensPara <- function(Yn1,
                                          Y0,
                                          A,
                                          type = "continuous",
-                                         quantile.range = seq(0,1,by=0.005)) {
+                                         quantile.range = c(0.025,0.975)) {
   
   N      <- length(Y0)
   idx0   <- which(A == 0)
@@ -389,7 +405,7 @@ UDID_Nonparametric_NoX_SensPara <- function(Yn1,
                                             Y0,
                                             A,
                                             type     = "continuous",
-                                            quantile.range = seq(0,1,by=0.005),
+                                            quantile.range = c(0.025,0.975),
                                             seed     = 42,
                                             hyperparameter = "fast",
                                             SL.hpara = list(SLL      = c(1),

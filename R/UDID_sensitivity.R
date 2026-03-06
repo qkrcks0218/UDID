@@ -58,7 +58,8 @@ UDID_Sensitivity_Bounds <- function(output, alpha = 0.95) {
 #' @param output A data.frame (or list with a \code{bounds} element) with
 #'   columns \code{log_Gamma}, \code{ATT}, \code{SE}.
 #' @param alpha Confidence level (default 0.95).
-#' @param col_att Color for ATT line.
+#' @param col_att_fill Fill color for ATT band.
+#' @param col_att_line Line color for ATT bounds.
 #' @param col_ci_fill Fill color for CI band.
 #' @param col_ci_line Line color for CI bounds.
 #' @param xlab X-axis label.

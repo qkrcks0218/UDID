@@ -10,7 +10,7 @@ UDID_Nonparametric_SensPara(
   A,
   X = NULL,
   type = "continuous",
-  quantile.range = seq(0, 1, by = 0.005),
+  quantile.range = c(0.025, 0.975),
   seed = 42,
   hyperparameter = "fast",
   SL.hpara = list(SLL = c(1), MLPL = c(2, 4), MTRY = c(1, 2, 3), NMN = 25, MLPdecay =
@@ -27,6 +27,15 @@ UDID_Nonparametric_SensPara(
 \item{X}{Optional covariate matrix.}
 
 \item{type}{Outcome type: \code{"continuous"} or \code{"binary"}.}
+
+\item{quantile.range}{Numeric vector of probabilities in (0,1) specifying
+which quantiles to report of the ratio
+\eqn{\alpha_{t=0}(y,x) / \alpha_{t=-1}(y,x)}, evaluated at
+\eqn{y \in \{Y_{t=0}, Y_{t=-1}\}} among treated units (\eqn{A=1})
+and observed \eqn{x}. Defaults to \code{c(0.025, 0.975)},
+corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
+range that summarizes the plausible spread of the sensitivity
+parameter ratio across outcome values and covariate values.}
 
 \item{seed}{Random seed.}
 

@@ -25,6 +25,10 @@ columns \code{log_Gamma}, \code{ATT}, \code{SE}.}
 
 \item{alpha}{Confidence level (default 0.95).}
 
+\item{col_att_fill}{Fill color for ATT band.}
+
+\item{col_att_line}{Line color for ATT bounds.}
+
 \item{col_ci_fill}{Fill color for CI band.}
 
 \item{col_ci_line}{Line color for CI bounds.}
@@ -40,8 +44,6 @@ columns \code{log_Gamma}, \code{ATT}, \code{SE}.}
 \item{legend}{Logical; show legend.}
 
 \item{legend.pos}{Legend position.}
-
-\item{col_att}{Color for ATT line.}
 }
 \value{
 Invisibly returns the crossings list.
