@@ -11,7 +11,10 @@
 #' @param type Outcome type: \code{"continuous"} or \code{"binary"}.
 #' @param log_Gamma_seq Numeric scalar or vector of log(Gamma) sensitivity values (default 0).
 #' @param seed Random seed for reproducibility.
-#' @param hyperparameter Hyperparameter tuning: \code{"fast"} or \code{"slow"}.
+#' @param hyperparameter Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
+#'   If \code{"fast"}, the bandwidth of the kernel density estimator is chosen using the rule-of-thumb method,
+#'   and the bandwidth of the Gaussian kernel in the density ratio estimator is determined by the median heuristic.
+#'   If \code{"slow"}, these bandwidth parameters are selected via cross-validation.
 #' @param SL.list Integer vector selecting which learner groups to include (1--9)
 #'   in the Super Learner ensemble passed to \code{MySL}.
 #'   Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
