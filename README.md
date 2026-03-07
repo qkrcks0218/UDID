@@ -95,7 +95,7 @@ plot(UDID.Result$Density$Y.Grid,
      type='l')
 ```
 
-![Alt text](./images/Sensitivity.png?raw=true "Density.png")
+![Alt text](./images/Density.png?raw=true "Density.png")
 
 ```{r}
 UDID.Result.Binary <- 
