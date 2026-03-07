@@ -34,7 +34,10 @@ UDID_Nonparametric(
 
 \item{seed}{Random seed for reproducibility.}
 
-\item{hyperparameter}{Hyperparameter tuning: \code{"fast"} or \code{"slow"}.}
+\item{hyperparameter}{Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
+If \code{"fast"}, the bandwidth of the kernel density estimator is chosen using the rule-of-thumb method,
+and the bandwidth of the Gaussian kernel in the density ratio estimator is determined by the median heuristic.
+If \code{"slow"}, these bandwidth parameters are selected via cross-validation.}
 
 \item{SL.list}{Integer vector selecting which learner groups to include (1--9)
 in the Super Learner ensemble passed to \code{MySL}.
