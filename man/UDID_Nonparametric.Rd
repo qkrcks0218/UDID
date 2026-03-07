@@ -13,9 +13,9 @@ UDID_Nonparametric(
   log_Gamma_seq = 0,
   seed = 42,
   hyperparameter = "fast",
-  SL.hpara = list(SLL = c(1), MLPL = c(2, 4), MTRY = c(1, 2, 3), NMN = 25, MLPdecay =
-    c(0.1, 0.001)),
-  density = FALSE,
+  SL.list = c(1),
+  density.report = FALSE,
+  hyperparameter.report = FALSE,
   verbose = FALSE
 )
 }
@@ -34,16 +34,64 @@ UDID_Nonparametric(
 
 \item{seed}{Random seed for reproducibility.}
 
-\item{hyperparameter}{Hyperparameter tuning \code{"fast"} or \code{"slow"}.}
+\item{hyperparameter}{Hyperparameter tuning: \code{"fast"} or \code{"slow"}.}
 
-\item{SL.hpara}{List of Super Learner hyperparameters passed to \code{MySL}.}
+\item{SL.list}{Integer vector selecting which learner groups to include (1--9)
+in the Super Learner ensemble passed to \code{MySL}.
+Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
+4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
+8 = gbm, 9 = 1-layer MLP.}
 
-\item{density}{Logical; return density estimates.}
+\item{density.report}{Logical; if \code{TRUE}, return estimated conditional densities.}
+
+\item{hyperparameter.report}{Logical; if \code{TRUE}, return \code{SL_Library}
+(Super Learner ensemble weights) and, for continuous outcomes,
+\code{selected_bws} (selected bandwidth parameters). Default is \code{FALSE}.}
 
 \item{verbose}{Logical; print progress messages.}
 }
 \value{
-A list with \code{Effect}, \code{Sensitivity}, and optionally \code{Density}.
+A named list with the following components:
+  \describe{
+    \item{\code{Effect}}{A single-row data frame reporting the estimated
+      average treatment effect on the treated (ATT) under the UDID method
+      at \code{log_Gamma = 0}, its asymptotic standard error (\code{SE}),
+      and its multiplier bootstrap standard error (\code{Boot.SE}).}
+    \item{\code{EIF}}{A data frame with one row per observation containing
+      the uncentered efficient influence function (\code{Uncentered EIF})
+      and the centered efficient influence function (\code{Centered EIF}),
+      both evaluated at \code{Gamma = 1} (i.e., \code{log_Gamma = 0}).}
+    \item{\code{Sensitivity}}{A data frame with one row per entry of
+      \code{log_Gamma_seq}, reporting the lower and upper sensitivity bounds
+      on the ATT (\code{ATT_LB}, \code{ATT_UB}) along with their asymptotic
+      and multiplier bootstrap standard errors (\code{SE_LB}, \code{SE_UB},
+      \code{SE.Boot_LB}, \code{SE.Boot_UB}).}
+    \item{\code{SL_Library}}{(only when \code{hyperparameter.report = TRUE})
+      A data frame reporting the Super Learner ensemble weights assigned to
+      each candidate algorithm in each cross-fitting fold. For continuous
+      outcomes the columns cover \code{Pr(A|X)}; for binary outcomes they
+      additionally cover \code{Pr(Y0|A=0,X)}, \code{Pr(Y0|A=1,X)}, and
+      \code{Pr(Y1|A=0,X)}.}
+    \item{\code{selected_bws}}{(only when \code{hyperparameter.report = TRUE}
+      and \code{type = "continuous"}) A data frame reporting the selected
+      bandwidth parameters, with one row for the outcome variable Y and one
+      row per covariate X1, ..., Xd. Columns cover the kernel density
+      estimate \eqn{f(Y_0|A=0,X)} (separate Y and X bandwidths from
+      \code{npcdens}) and the two KLIEP density ratio estimates
+      \eqn{f(Y_0|A=1,X)/f(Y_0|A=0,X)} and
+      \eqn{f(Y_1|A=0,X)/f(Y_0|A=0,X)} (a single Gaussian kernel bandwidth
+      \eqn{\sigma} shared across all dimensions), each reported for the two
+      cross-fitting folds.}
+    \item{\code{Density}}{(only when \code{density.report = TRUE}) A list of
+      matrices \code{fY0A0}, \code{fY0A1}, \code{fY1A0}, \code{fY1A1} and
+      a vector \code{Y.Grid}. Each matrix has one row per observation and
+      one column per grid point of Y (501 equally spaced points for
+      continuous outcomes; two points \{0, 1\} for binary outcomes).
+      Matrix entries give the estimated conditional density
+      \eqn{f(y | A = a, X_i)} at each grid point. For binary outcomes,
+      \code{fY1A1} is derived from the UDID parallel-trends odds-ratio
+      assumption at \eqn{\Gamma = 1}.}
+  }
 }
 \description{
 Nonparametric universal difference-in-differences estimator with sensitivity

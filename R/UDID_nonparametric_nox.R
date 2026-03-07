@@ -2,17 +2,14 @@
 UDID_Nonparametric_NoX <- function(Y0,
                                    Y1,
                                    A,
-                                   type          = "continuous",
-                                   log_Gamma_seq = 0,
-                                   seed          = 42,
-                                   SL.hpara      = list(SLL      = c(1),
-                                                        MLPL     = c(2, 4),
-                                                        MTRY     = c(1, 2, 3),
-                                                        NMN      = 25,
-                                                        MLPdecay = c(0.1, 0.001)),
-                                   hyperparameter = "fast",
-                                   density       = FALSE,
-                                   verbose       = FALSE) {
+                                   type                  = "continuous",
+                                   log_Gamma_seq         = 0,
+                                   seed                  = 42,
+                                   SL.list               = c(1),
+                                   hyperparameter        = "fast",
+                                   density.report        = FALSE,
+                                   hyperparameter.report = FALSE,
+                                   verbose               = FALSE) {
   Gamma_seq <- exp(log_Gamma_seq)
   N  <- length(Y0)
   nG <- length(Gamma_seq)
@@ -23,19 +20,25 @@ UDID_Nonparametric_NoX <- function(Y0,
   idx0     <- sample(which(A == 0), ceiling(sum(A == 0) / 2))
   SS.Index <- list(c(idx1, idx0), setdiff(seq_len(N), c(idx1, idx0)))
   
-  uncEIF_UB_full <- replicate(nG, numeric(N), simplify = FALSE)
-  uncEIF_LB_full <- replicate(nG, numeric(N), simplify = FALSE)
+  uncEIF_UB_full   <- replicate(nG, numeric(N), simplify = FALSE)
+  uncEIF_LB_full   <- replicate(nG, numeric(N), simplify = FALSE)
+  uncEIF_base_full <- numeric(N)   ## EIF at Gamma = 1, always accumulated
   
-  ## Density accumulators — pre-allocate N x Num.Y.Grid.Basis matrices
-  if (density) {
-    Num.Y.Grid.Basis <- 501
+  ## Density accumulators — continuous: N x 501; binary: N x 2
+  if (density.report) {
+    Num.Grid <- if (type == "continuous") 501L else 2L
     density_full <- list(
-      fY0A0 = matrix(NA, N, Num.Y.Grid.Basis),
-      fY0A1 = matrix(NA, N, Num.Y.Grid.Basis),
-      fY1A0 = matrix(NA, N, Num.Y.Grid.Basis),
-      fY1A1 = matrix(NA, N, Num.Y.Grid.Basis),
+      fY0A0  = matrix(NA_real_, N, Num.Grid),
+      fY0A1  = matrix(NA_real_, N, Num.Grid),
+      fY1A0  = matrix(NA_real_, N, Num.Grid),
+      fY1A1  = matrix(NA_real_, N, Num.Grid),
       Y.Grid = NULL
     )
+  }
+  
+  ## Hyperparameter report: (continuous only) bandwidth info
+  if (hyperparameter.report && type == "continuous") {
+    fold_bw_info <- vector("list", 2)
   }
   
   for (ss in 1:2) {
@@ -43,21 +46,26 @@ UDID_Nonparametric_NoX <- function(Y0,
     fold_results <- .UDID_fold_NoX(
       Y0[train], Y1[train], A[train],
       Y0[eval],  Y1[eval],  A[eval],
-      type, SL.hpara, Gamma_seq, seed = seed * 10L + ss, fold_id = ss,
-      hyperparameter = hyperparameter,
-      density = density,
-      verbose = verbose)
+      type, SL.list, Gamma_seq, seed = seed * 10L + ss, fold_id = ss,
+      hyperparameter        = hyperparameter,
+      density.report        = density.report,
+      hyperparameter.report = hyperparameter.report,
+      verbose               = verbose)
     for (gi in seq_len(nG)) {
       ## UB/LB for counterfactual mean => LB/UB for ATT
       uncEIF_UB_full[[gi]][eval] <- fold_results[[gi]]$LB
       uncEIF_LB_full[[gi]][eval] <- fold_results[[gi]]$UB
     }
-    if (density && !is.null(fold_results$fY0A0)) {
+    uncEIF_base_full[eval] <- fold_results$base_eif
+    if (density.report && !is.null(fold_results$fY0A0)) {
       density_full$fY0A0[eval, ] <- fold_results$fY0A0
       density_full$fY0A1[eval, ] <- fold_results$fY0A1
       density_full$fY1A0[eval, ] <- fold_results$fY1A0
       density_full$fY1A1[eval, ] <- fold_results$fY1A1
       density_full$Y.Grid        <- fold_results$Y.Grid
+    }
+    if (hyperparameter.report && type == "continuous") {
+      fold_bw_info[[ss]] <- fold_results$bw_info
     }
   }
   
@@ -91,11 +99,11 @@ UDID_Nonparametric_NoX <- function(Y0,
   if (length(base_gi) > 0) {
     base_att <- results[[base_gi[1]]]$ATT_UB
     base_se  <- results[[base_gi[1]]]$SE_UB
-    base_bse  <- results[[base_gi[1]]]$SE.Boot_UB
+    base_bse <- results[[base_gi[1]]]$SE.Boot_UB
   } else {
     base_att <- results[[1]]$ATT_UB
     base_se  <- results[[1]]$SE_UB
-    base_bse  <- results[[1]]$SE.Boot_UB
+    base_bse <- results[[1]]$SE.Boot_UB
   }
   effect_row <- data.frame(ATT = base_att, SE = base_se, Boot.SE = base_bse)
   
@@ -109,8 +117,41 @@ UDID_Nonparametric_NoX <- function(Y0,
     SE.Boot_UB = sapply(results, `[[`, "SE.Boot_UB")
   )
   
-  RESULT <- list(Effect = effect_row, Sensitivity = sens_df)
-  if (density) {
+  ## EIF at Gamma = 1 (always reported)
+  eif_unc <- uncEIF_base_full / pr_A
+  eif_tau <- mean(eif_unc)
+  eif_cen <- eif_unc - A * eif_tau / pr_A
+  eif_df  <- data.frame(
+    `Uncentered EIF` = eif_unc,
+    `Centered EIF`   = eif_cen,
+    check.names = FALSE
+  )
+  
+  RESULT <- list(Effect = effect_row, EIF = eif_df, Sensitivity = sens_df)
+  
+  ## Hyperparameter report: SL_Library = NULL (no SuperLearner in NoX),
+  ## selected_bws for continuous case
+  if (hyperparameter.report) {
+    RESULT$SL_Library <- NULL
+    
+    if (type == "continuous") {
+      bw_i1 <- fold_bw_info[[1]]
+      bw_i2 <- fold_bw_info[[2]]
+      bw_table <- data.frame(
+        `Fold 1: f(Y0|A=0)` = bw_i1$fY0A0$ybw,
+        `Fold 2: f(Y0|A=0)` = bw_i2$fY0A0$ybw,
+        `Fold 1: f(Y0|A=1)/f(Y0|A=0)` = bw_i1$DR_Y0A1_Y0A0$sigma,
+        `Fold 2: f(Y0|A=1)/f(Y0|A=0)` = bw_i2$DR_Y0A1_Y0A0$sigma,
+        `Fold 1: f(Y1|A=0)/f(Y0|A=0)` = bw_i1$DR_Y1A0_Y0A0$sigma,
+        `Fold 2: f(Y1|A=0)/f(Y0|A=0)` = bw_i2$DR_Y1A0_Y0A0$sigma,
+        row.names   = "Y",
+        check.names = FALSE
+      )
+      RESULT$selected_bws <- bw_table
+    }
+  }
+  
+  if (density.report) {
     RESULT$Density <- density_full
   }
   return(RESULT)
@@ -121,10 +162,11 @@ UDID_Nonparametric_NoX <- function(Y0,
 
 .UDID_fold_NoX <- function(Y0, Y1, A,
                            Y0.Eval, Y1.Eval, A.Eval,
-                           type, SL.hpara, Gamma_seq, seed, fold_id = NULL,
-                           hyperparameter = "fast",
-                           density = FALSE,
-                           verbose = FALSE) {
+                           type, SL.list, Gamma_seq, seed, fold_id = NULL,
+                           hyperparameter        = "fast",
+                           density.report        = FALSE,
+                           hyperparameter.report = FALSE,
+                           verbose               = FALSE) {
   
   N.Test           <- length(Y0.Eval)
   Num.Y.Grid.Basis <- 501
@@ -206,6 +248,15 @@ UDID_Nonparametric_NoX <- function(Y0,
     if (verbose) cat(sprintf("Fold %d: estimating the propensity score Pr(A)\n", fold_id))
     Est.Marginal.ProbA <- rep(mean(A), N.Test)
     
+    ## Capture KDE and KLIEP bandwidths (continuous only)
+    if (hyperparameter.report) {
+      bw_info <- list(
+        fY0A0        = list(ybw = as.numeric(npbw.Y0A0$ybw)),
+        DR_Y0A1_Y0A0 = list(sigma = DR.Y0A1.Y0A0$kernel_info$sigma),
+        DR_Y1A0_Y0A0 = list(sigma = DR.Y1A0.Y0A0$kernel_info$sigma)
+      )
+    }
+    
     if (verbose) cat(sprintf("Fold %d: calculating the efficient influence function\n", fold_id))
     Joint.Prob.Y0A.EvalY0 <- cbind(
       Raw.Y0A1.DR[, col_Y0]    * Est.Marginal.ProbA,
@@ -271,6 +322,17 @@ UDID_Nonparametric_NoX <- function(Y0,
     DR.base    <- (Prob.Predict[,5]*(1-Y0.Eval) + Prob.Predict[,6]*Y0.Eval) /
       (Prob.Predict[,1]*(1-Y0.Eval) + Prob.Predict[,2]*Y0.Eval)
     beta0.eval <- Prob.Predict[,3] / Prob.Predict[,1]
+    
+    ## Binary conditional densities: N x 2 matrices (col 1 = Y=0, col 2 = Y=1)
+    ## fY1A1 is derived via the UDID OR assumption at Gamma = 1
+    if (density.report) {
+      bin_fY0A0      <- cbind(1 - Est.PrY01gA0, Est.PrY01gA0)
+      bin_fY0A1      <- cbind(1 - Est.PrY01gA1, Est.PrY01gA1)
+      bin_fY1A0      <- cbind(1 - Est.PrY11gA0, Est.PrY11gA0)
+      denom_Y1A1     <- (1 - Cond.Density) + hat.OR.x.alpha0 * Cond.Density
+      bin_fY1A1      <- cbind((1 - Cond.Density)              / denom_Y1A1,
+                              hat.OR.x.alpha0 * Cond.Density / denom_Y1A1)
+    }
   }
   
   ## ----------------------------------------------------------
@@ -278,7 +340,9 @@ UDID_Nonparametric_NoX <- function(Y0,
   ## ----------------------------------------------------------
   
   pr_A.eval <- mean(A.Eval)
-  Y.Grid.Mat <- matrix(Y.Grid.Basis, N.Test, Num.Y.Grid.Basis, byrow = TRUE)
+  if (type == "continuous") {
+    Y.Grid.Mat <- matrix(Y.Grid.Basis, N.Test, Num.Y.Grid.Basis, byrow = TRUE)
+  }
   
   .fold_eif_noX <- function(Gamma, direction) {
     if (type == "continuous") {
@@ -366,13 +430,28 @@ UDID_Nonparametric_NoX <- function(Y0,
     }
   }
   
-  if (density && type == "continuous") {
+  ## Always store EIF at Gamma = 1 for the caller
+  results$base_eif <- base_res$eif
+  
+  ## Density output
+  if (density.report && type == "continuous") {
     results$fY0A0      <- Raw.Y0A0.KDE[, grid_cols]
     results$fY0A1      <- Raw.Y0A1.DR[, grid_cols]
     results$fY1A0      <- Raw.Y1A0.DR[, grid_cols]
     fY1A1              <- OR.Grid.alpha0 * Raw.Y1A0.DR[, grid_cols] * dY
     results$fY1A1      <- fY1A1 / matrix(rowSums(fY1A1), N.Test, Num.Y.Grid.Basis)
     results$Y.Grid     <- Y.Grid.Basis
+  } else if (density.report && type == "binary") {
+    results$fY0A0  <- bin_fY0A0
+    results$fY0A1  <- bin_fY0A1
+    results$fY1A0  <- bin_fY1A0
+    results$fY1A1  <- bin_fY1A1
+    results$Y.Grid <- c(0L, 1L)
+  }
+  
+  ## Hyperparameter report output
+  if (hyperparameter.report && type == "continuous") {
+    results$bw_info <- bw_info
   }
   
   results

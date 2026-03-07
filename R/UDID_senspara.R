@@ -152,7 +152,11 @@ UDID_Parametric_SensPara <- function(Yn1,
 #'   parameter ratio across outcome values and covariate values.
 #' @param seed Random seed.
 #' @param hyperparameter Hyperparameter tuning \code{"fast"} or \code{"slow"}.
-#' @param SL.hpara Super Learner hyperparameters.
+#' @param SL.list Integer vector selecting which learner groups to include (1--9)
+#'   in the Super Learner ensemble passed to \code{MySL}.
+#'   Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
+#'   4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
+#'   8 = gbm, 9 = 1-layer MLP.
 #'
 #' @return A named numeric vector of quantiles of the sensitivity parameter ratio.
 #' @export
@@ -164,11 +168,7 @@ UDID_Nonparametric_SensPara <- function(Yn1,
                                         quantile.range = c(0.025,0.975),
                                         seed      = 42,
                                         hyperparameter = "fast",
-                                        SL.hpara  = list(SLL      = c(1),
-                                                         MLPL     = c(2, 4),
-                                                         MTRY     = c(1, 2, 3),
-                                                         NMN      = 25,
-                                                         MLPdecay = c(0.1, 0.001))) {
+                                        SL.list = c(1)) {
   
   ## Dispatch to no-covariate version if X is NULL
   if (is.null(X)) {
@@ -176,7 +176,7 @@ UDID_Nonparametric_SensPara <- function(Yn1,
                                            type = type, seed = seed,
                                            hyperparameter = hyperparameter,
                                            quantile.range = quantile.range,
-                                           SL.hpara = SL.hpara))
+                                           SL.list = SL.list))
   }
   
   N      <- length(Y0)
@@ -255,16 +255,12 @@ UDID_Nonparametric_SensPara <- function(Yn1,
     set.seed(seed)
     SL.ProbA.givenYn1 <- MySL(Data.Reset, locY = 1, locX = c(2, 3 + 1:d),
                               Ydist = stats::binomial(),
-                              SL.list = SL.hpara$SLL, MTRY = SL.hpara$MTRY,
-                              MLPL = SL.hpara$MLPL, NMN = SL.hpara$NMN,
-                              MLPdecay = SL.hpara$MLPdecay)
+                              SL.list = SL.list)
     
     set.seed(seed + 1)
     SL.ProbA.givenY0 <- MySL(Data.Reset, locY = 1, locX = c(3, 3 + 1:d),
                              Ydist = stats::binomial(),
-                             SL.list = SL.hpara$SLL, MTRY = SL.hpara$MTRY,
-                             MLPL = SL.hpara$MLPL, NMN = SL.hpara$NMN,
-                             MLPdecay = SL.hpara$MLPdecay)
+                             SL.list = SL.list)
     
     y_ref     <- 0
     y_grid    <- c(0,1)
@@ -408,11 +404,7 @@ UDID_Nonparametric_NoX_SensPara <- function(Yn1,
                                             quantile.range = c(0.025,0.975),
                                             seed     = 42,
                                             hyperparameter = "fast",
-                                            SL.hpara = list(SLL      = c(1),
-                                                            MLPL     = c(2, 4),
-                                                            MTRY     = c(1, 2, 3),
-                                                            NMN      = 25,
-                                                            MLPdecay = c(0.1, 0.001))) {
+                                            SL.list = c(1)) {
   
   N      <- length(Y0)
   idx0   <- which(A == 0)
@@ -479,46 +471,8 @@ UDID_Nonparametric_NoX_SensPara <- function(Yn1,
     return( stats::quantile(range_alpha, quantile.range) )
     
   } else if (type == "binary") {
-    
-    ## Build data with Y only (no X columns)
-    Data.Reset <- data.frame(A = round(A), Yn1 = Yn1, Y0 = Y0)
-    
-    set.seed(seed)
-    SL.ProbA.givenYn1 <- MySL(Data.Reset, locY = 1, locX = 2,
-                              Ydist = stats::binomial(),
-                              SL.list = SL.hpara$SLL, MTRY = SL.hpara$MTRY,
-                              MLPL = SL.hpara$MLPL, NMN = SL.hpara$NMN,
-                              MLPdecay = SL.hpara$MLPdecay)
-    
-    set.seed(seed + 1)
-    SL.ProbA.givenY0 <- MySL(Data.Reset, locY = 1, locX = 3,
-                             Ydist = stats::binomial(),
-                             SL.list = SL.hpara$SLL, MTRY = SL.hpara$MTRY,
-                             MLPL = SL.hpara$MLPL, NMN = SL.hpara$NMN,
-                             MLPdecay = SL.hpara$MLPdecay)
-    
-    y_ref  <- 0
-    y_grid <- c(0, 1)
-    ng     <- length(y_grid)
-    
-    y_grid_rep <- rep(y_grid, each = N)
-    
-    Data.Reset.Eval.Y0      <- data.frame(Y0  = y_grid_rep)
-    Data.Reset.Eval.Yn1     <- data.frame(Yn1 = y_grid_rep)
-    Data.Reset.Eval.Y0_ref  <- data.frame(Y0  = rep(y_ref, N * ng))
-    Data.Reset.Eval.Yn1_ref <- data.frame(Yn1 = rep(y_ref, N * ng))
-    
-    r0      <- stats::predict(SL.ProbA.givenY0,  newdata = Data.Reset.Eval.Y0,      onlySL = TRUE)$pred
-    rn1     <- stats::predict(SL.ProbA.givenYn1, newdata = Data.Reset.Eval.Yn1,     onlySL = TRUE)$pred
-    r0_ref  <- stats::predict(SL.ProbA.givenY0,  newdata = Data.Reset.Eval.Y0_ref,  onlySL = TRUE)$pred
-    rn1_ref <- stats::predict(SL.ProbA.givenYn1, newdata = Data.Reset.Eval.Yn1_ref, onlySL = TRUE)$pred
-    
-    alpha0_grid  <- matrix(safe_ratio(r0,  r0_ref),  N, ng)
-    alphan1_grid <- matrix(safe_ratio(rn1, rn1_ref), N, ng)
-    range_alpha  <- as.vector(alpha0_grid / alphan1_grid)
-    
-    return(stats::quantile(range_alpha, quantile.range))
-    
+    return(UDID_Parametric_NoX_SensPara(Yn1 = Yn1, Y0 = Y0, A = A,
+                                        type = type, quantile.range = quantile.range))
   } else {
     stop("type must be 'continuous' or 'binary'")
   }

@@ -9,11 +9,7 @@ MySL(
   locY,
   locX,
   Ydist = stats::gaussian(),
-  SL.list = c(1:12),
-  MTRY = c(2, 4, 6, 8),
-  MLPL = c(2, 4, 6, 8),
-  MLPdecay = c(10^(-4), 10^(-5)),
-  NMN = c(20),
+  SL.list = c(1:9),
   obsWeights = NULL,
   PS.thr = 10^(-3),
   CVlist = NULL
@@ -28,15 +24,10 @@ MySL(
 
 \item{Ydist}{A family object (e.g., \code{gaussian()}, \code{binomial()}).}
 
-\item{SL.list}{Integer vector selecting which learner groups to include (1-12).}
-
-\item{MTRY}{Integer vector of mtry values for random forest and nnet.}
-
-\item{MLPL}{Integer vector of layer sizes for MLP learners.}
-
-\item{MLPdecay}{Numeric vector of decay rates for MLP learners.}
-
-\item{NMN}{Integer vector for minimum node sizes.}
+\item{SL.list}{Integer vector selecting which learner groups to include (1--9).
+Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
+4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
+8 = gbm, 9 = 1-layer MLP.}
 
 \item{obsWeights}{Optional observation weights.}
 

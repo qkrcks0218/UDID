@@ -13,8 +13,7 @@ UDID_Nonparametric_SensPara(
   quantile.range = c(0.025, 0.975),
   seed = 42,
   hyperparameter = "fast",
-  SL.hpara = list(SLL = c(1), MLPL = c(2, 4), MTRY = c(1, 2, 3), NMN = 25, MLPdecay =
-    c(0.1, 0.001))
+  SL.list = c(1)
 )
 }
 \arguments{
@@ -41,7 +40,11 @@ parameter ratio across outcome values and covariate values.}
 
 \item{hyperparameter}{Hyperparameter tuning \code{"fast"} or \code{"slow"}.}
 
-\item{SL.hpara}{Super Learner hyperparameters.}
+\item{SL.list}{Integer vector selecting which learner groups to include (1--9)
+in the Super Learner ensemble passed to \code{MySL}.
+Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
+4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
+8 = gbm, 9 = 1-layer MLP.}
 }
 \value{
 A named numeric vector of quantiles of the sensitivity parameter ratio.

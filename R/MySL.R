@@ -7,11 +7,10 @@
 #' @param locY Column index for the outcome variable.
 #' @param locX Column index (or indices) for the covariates.
 #' @param Ydist A family object (e.g., \code{gaussian()}, \code{binomial()}).
-#' @param SL.list Integer vector selecting which learner groups to include (1-12).
-#' @param MTRY Integer vector of mtry values for random forest and nnet.
-#' @param MLPL Integer vector of layer sizes for MLP learners.
-#' @param MLPdecay Numeric vector of decay rates for MLP learners.
-#' @param NMN Integer vector for minimum node sizes.
+#' @param SL.list Integer vector selecting which learner groups to include (1--9).
+#'   Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
+#'   4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
+#'   8 = gbm, 9 = 1-layer MLP.
 #' @param obsWeights Optional observation weights.
 #' @param PS.thr Propensity score threshold (default 1e-3).
 #' @param CVlist Optional list of cross-validation fold assignments.
@@ -19,7 +18,7 @@
 #' @return A fitted \code{SuperLearner} object.
 #' @export
 MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
-                  SL.list=c(1:12), MTRY=c(2,4,6,8), MLPL=c(2,4,6,8), MLPdecay=c(10^(-4),10^(-5)), NMN=c(20), obsWeights=NULL,
+                  SL.list=c(1:9), obsWeights=NULL,
                   PS.thr = 10^(-3), CVlist=NULL ){
 
   ## Poisson c(2,4,5)
@@ -277,42 +276,27 @@ MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
   Learners[[1]] <- SuperLearner::create.Learner("SL.glm")
   TOTAL.M <- 1
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.glmnet",tune=list(alpha=c(1,0.5,0),useMin=c(TRUE,FALSE)))
-  TOTAL.M <- TOTAL.M+1           # 2
+  Learners[[2]] <- SuperLearner::create.Learner("SL.glmnet",tune=list(alpha=c(1,0.5,0),useMin=c(TRUE,FALSE)))
+  
+  Learners[[3]] <- SuperLearner::create.Learner("SL.new.earth",tune=list(degree=c(1,2,3,4,5)))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.new.earth",tune=list(degree=c(1,2,3,4,5)))
-  TOTAL.M <- TOTAL.M+1           # 3
+  Learners[[4]] <- SuperLearner::create.Learner("SL.gam",tune=list(deg.gam=c(1,2,3,4,5)))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.gam",tune=list(deg.gam=c(1,2,3,4,5)))
-  TOTAL.M <- TOTAL.M+1           # 4
+  Learners[[5]] <- SuperLearner::create.Learner("SL.new.xgboost",tune=list(n.trees=c(100,300,500),max_depth=c(1,2,3,4)))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.new.xgboost",tune=list(n.trees=c(100,300,500),max_depth=c(1,2,3,4)))
-  TOTAL.M <- TOTAL.M+1           # 5
+  Learners[[6]] <- SuperLearner::create.Learner("SL.polymars",tune=list(knots=c(2,3,4)))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.polymars",tune=list(knots=c(2,3,4)))
-  TOTAL.M <- TOTAL.M+1           # 6
+  num_x_var <- length(locX)
+  
+  Learners[[7]] <- SuperLearner::create.Learner("SL.ranger",tune=list(num.trees=c(500,1000,1500),mtry=c(1,ceiling(sqrt(num_x_var)))))
+  
+  # Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.nnet",tune=list(linout=c(TRUE,FALSE), decay=c(0,0.1),size=MTRY))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.ranger",tune=list(num.trees=c(500,1000,1500),mtry=MTRY))
-  TOTAL.M <- TOTAL.M+1           # 7
+  Learners[[8]] <- SuperLearner::create.Learner("SL.caret.gbm",tune=list(ntree=c(100,300,500),intdepth=c(1,2,3),sh=c(0.1,0.01),nmn=10))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.nnet",tune=list(linout=c(TRUE,FALSE), decay=c(0,0.1),size=MTRY))
-  TOTAL.M <- TOTAL.M+1           # 8
+  Learners[[9]] <- SuperLearner::create.Learner("SL.caret.SLP", tune = list(L1=c(2,4),L2=c(0),L3=c(0),decay=10^c(-1,-3)))
 
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.caret.gbm",tune=list(ntree=c(100,300,500),intdepth=c(1,2,3),sh=c(0.1,0.01),nmn=NMN))
-  TOTAL.M <- TOTAL.M+1           # 9
-
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.caret.SLP", tune = list(L1=MLPL,L2=c(0),L3=c(0),decay=MLPdecay))
-  TOTAL.M <- TOTAL.M+1           # 10
-
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.caret.MLP", tune = list(L1=MLPL,L2=MLPL,L3=MLPL,decay=MLPdecay))
-  TOTAL.M <- TOTAL.M+1           # 11
-
-  Learners[[TOTAL.M+1]] <- SuperLearner::create.Learner("SL.xgboost",
-                                          tune=list(ntrees = c(100,500,1000),
-                                                    max_depth = 4,
-                                                    shrinkage = c(0.1,0.01),
-                                                    minobspernode = NMN))
-  TOTAL.M <- TOTAL.M+1           # 12
+  # Learners[[10]] <- SuperLearner::create.Learner("SL.caret.MLP", tune = list(L1=c(2,4),L2=MLPL,L3=MLPL,decay=MLPdecay))
 
   BaseLearner <- Learners[[ SL.list[1] ]]$names
 
