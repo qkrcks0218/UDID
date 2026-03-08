@@ -9,23 +9,18 @@ safe_ratio <- function(num, den, clip = 1e-6) {
 
 #' @keywords internal
 Truncate.Function <- function(X.Input, LB, UB) {
-  if (is.null(dim(X.Input))) {
-    apply(cbind(X.Input, LB, UB), 1, median)
-  } else {
-    LL  <- list(as.matrix(X.Input),
-                matrix(LB, nrow(X.Input), ncol(X.Input)),
-                matrix(UB, nrow(X.Input), ncol(X.Input)))
-    ULL <- array(unlist(LL), c(nrow(X.Input), ncol(X.Input), 3))
-    out <- apply(ULL, c(1, 2), median)
-    colnames(out) <- colnames(X.Input)
-    out
-  }
+  ## pmin/pmax is vectorised and works for both vectors and matrices;
+  ## median(c(x, LB, UB)) == pmin(pmax(x, LB), UB) when LB <= UB.
+  pmin(pmax(X.Input, LB), UB)
 }
+
+
+.clamp <- function(x, LB, UB) pmin(pmax(x, LB), UB)
 
 #' @keywords internal
 Mboot <- function(V, N, NumBoot = N) {
   BootMat1 <- matrix(rnorm(N * NumBoot) + 1, N, NumBoot)
-  apply(BootMat1 * matrix(V, N, NumBoot), 2, mean)
+  colMeans(BootMat1 * V)   # V recycles by column; colMeans ~10x faster than apply
 }
 
 #' @keywords internal

@@ -431,3 +431,146 @@ Rcpp::List kliep_bw_cpp(const arma::mat& x1,
     Rcpp::Named("centers")        = Rcpp::wrap(centers)
   );
 }
+
+
+// ================================================================
+//  EIF grid utilities
+// ================================================================
+
+//' Combined rowSums for E_alpha and E_Yalpha in one pass
+//'
+//' For each row i computes
+//'   E_alpha[i]  = sum_j OR[i,j] * Cond[i,j]
+//'   E_Yalpha[i] = sum_j Y_grid[j] * OR[i,j] * Cond[i,j]
+//' in a single C++ loop, avoiding the creation of temporary N x M matrices.
+//'
+//' @param OR     (N x M) odds-ratio grid matrix
+//' @param Cond   (N x M) conditional density grid  (already scaled by dY)
+//' @param Y_grid (M)     outcome grid values
+//' @return List with E_alpha (N) and E_Yalpha (N)
+// [[Rcpp::export]]
+Rcpp::List rowsums_grid_cpp(const arma::mat& OR,
+                             const arma::mat& Cond,
+                             const arma::vec& Y_grid)
+{
+  const int N = (int)OR.n_rows;
+  const int M = (int)OR.n_cols;
+  arma::vec E_alpha(N), E_Yalpha(N);
+
+#ifdef _OPENMP
+  #pragma omp parallel for schedule(static)
+#endif
+  for (int i = 0; i < N; i++) {
+    double ea = 0.0, eya = 0.0;
+    for (int j = 0; j < M; j++) {
+      double v = OR(i, j) * Cond(i, j);
+      ea  += v;
+      eya += Y_grid[j] * v;
+    }
+    E_alpha[i]  = ea;
+    E_Yalpha[i] = eya;
+  }
+  return Rcpp::List::create(Rcpp::Named("E_alpha")  = E_alpha,
+                             Rcpp::Named("E_Yalpha") = E_Yalpha);
+}
+
+
+//' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
+//'
+//' For each row i and column j applies the sensitivity scale factor
+//'   scale[i,j] = exp(+half_log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
+//'              = exp(-half_log_Gamma)   otherwise
+//' directly during accumulation, avoiding construction of the scale and
+//' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
+//'
+//' @param OR_grid       (N x M) base odds-ratio grid (alpha_0)
+//' @param Cond          (N x M) conditional density grid
+//' @param Y_grid        (M)     outcome grid values
+//' @param mu_vec        (N)     per-observation baseline counterfactual mean
+//' @param half_log_Gamma  scalar = log(Gamma) / 2
+//' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
+//' @return List with E_alpha (N) and E_Yalpha (N)
+// [[Rcpp::export]]
+Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid,
+                             const arma::mat& Cond,
+                             const arma::vec& Y_grid,
+                             const arma::vec& mu_vec,
+                             double           half_log_Gamma,
+                             bool             is_UB)
+{
+  const int    N      = (int)OR_grid.n_rows;
+  const int    M      = (int)OR_grid.n_cols;
+  const double g_up   = std::exp( half_log_Gamma);
+  const double g_down = std::exp(-half_log_Gamma);
+  arma::vec E_alpha(N), E_Yalpha(N);
+
+  // Branch outside the parallel loop so the condition is not re-evaluated N times
+  if (is_UB) {
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < N; i++) {
+      const double mu_i = mu_vec[i];
+      double ea = 0.0, eya = 0.0;
+      for (int j = 0; j < M; j++) {
+        double scale = (Y_grid[j] > mu_i) ? g_up : g_down;
+        double v     = OR_grid(i, j) * Cond(i, j) * scale;
+        ea  += v;
+        eya += Y_grid[j] * v;
+      }
+      E_alpha[i]  = ea;
+      E_Yalpha[i] = eya;
+    }
+  } else {
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < N; i++) {
+      const double mu_i = mu_vec[i];
+      double ea = 0.0, eya = 0.0;
+      for (int j = 0; j < M; j++) {
+        double scale = (Y_grid[j] > mu_i) ? g_down : g_up;
+        double v     = OR_grid(i, j) * Cond(i, j) * scale;
+        ea  += v;
+        eya += Y_grid[j] * v;
+      }
+      E_alpha[i]  = ea;
+      E_Yalpha[i] = eya;
+    }
+  }
+  return Rcpp::List::create(Rcpp::Named("E_alpha")  = E_alpha,
+                             Rcpp::Named("E_Yalpha") = E_Yalpha);
+}
+
+
+//' Multiplier bootstrap SD (memory-efficient, uses R RNG)
+//'
+//' Computes sd(colMeans(matrix(rnorm(N*NumBoot)+1, N, NumBoot) * V))
+//' using a single BLAS matrix-vector product instead of materialising
+//' the full N x NumBoot matrix in R.  Uses R's RNG so set.seed() in R
+//' controls reproducibility.
+//'
+//' Math:  colMeans(BootMat * V)[b]
+//'          = mean_V + (1/N) * sum_i V[i] * Z[i,b]   (Z ~ N(0,1))
+//'          = mean_V + (V^T Z)_b / N                  (BLAS DGEMV)
+//'
+//' @param V       length-N EIF vector
+//' @param NumBoot number of bootstrap replicates
+//' @return scalar standard deviation (same as sd(Mboot(V, N, NumBoot)))
+// [[Rcpp::export]]
+double mboot_sd_cpp(const arma::vec& V, int NumBoot)
+{
+  const int    N      = (int)V.n_elem;
+  const double mean_V = arma::mean(V);
+
+  // Draw N*NumBoot N(0,1) via R's RNG — respects set.seed() from R
+  Rcpp::NumericVector z_r = Rcpp::rnorm(N * NumBoot, 0.0, 1.0);
+
+  // Zero-copy view as column-major N x NumBoot Armadillo matrix
+  const arma::mat Z(z_r.begin(), N, NumBoot, /*copy=*/false);
+
+  // col_means[b] = mean_V + (V^T Z_col_b) / N  — single BLAS call
+  const arma::rowvec col_means = V.t() * Z / N + mean_V;
+
+  return arma::stddev(col_means);   // sd with 1/(N-1) denominator, same as R's sd()
+}

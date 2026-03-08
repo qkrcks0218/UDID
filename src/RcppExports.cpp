@@ -72,12 +72,56 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rowsums_grid_cpp
+Rcpp::List rowsums_grid_cpp(const arma::mat& OR, const arma::mat& Cond, const arma::vec& Y_grid);
+RcppExport SEXP _UDID_rowsums_grid_cpp(SEXP ORSEXP, SEXP CondSEXP, SEXP Y_gridSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type OR(ORSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Cond(CondSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Y_grid(Y_gridSEXP);
+    rcpp_result_gen = Rcpp::wrap(rowsums_grid_cpp(OR, Cond, Y_grid));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sens_rowsums_cpp
+Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid, const arma::mat& Cond, const arma::vec& Y_grid, const arma::vec& mu_vec, double half_log_Gamma, bool is_UB);
+RcppExport SEXP _UDID_sens_rowsums_cpp(SEXP OR_gridSEXP, SEXP CondSEXP, SEXP Y_gridSEXP, SEXP mu_vecSEXP, SEXP half_log_GammaSEXP, SEXP is_UBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type OR_grid(OR_gridSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Cond(CondSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Y_grid(Y_gridSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu_vec(mu_vecSEXP);
+    Rcpp::traits::input_parameter< double >::type half_log_Gamma(half_log_GammaSEXP);
+    Rcpp::traits::input_parameter< bool >::type is_UB(is_UBSEXP);
+    rcpp_result_gen = Rcpp::wrap(sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mboot_sd_cpp
+double mboot_sd_cpp(const arma::vec& V, int NumBoot);
+RcppExport SEXP _UDID_mboot_sd_cpp(SEXP VSEXP, SEXP NumBootSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type V(VSEXP);
+    Rcpp::traits::input_parameter< int >::type NumBoot(NumBootSEXP);
+    rcpp_result_gen = Rcpp::wrap(mboot_sd_cpp(V, NumBoot));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_UDID_gaussian_kernel_ratio", (DL_FUNC) &_UDID_gaussian_kernel_ratio, 5},
     {"_UDID_gaussian_kernel_matrix_bw", (DL_FUNC) &_UDID_gaussian_kernel_matrix_bw, 4},
     {"_UDID_gaussian_kernel_ratio_bw", (DL_FUNC) &_UDID_gaussian_kernel_ratio_bw, 5},
     {"_UDID_kliep_bw_cpp", (DL_FUNC) &_UDID_kliep_bw_cpp, 7},
+    {"_UDID_rowsums_grid_cpp", (DL_FUNC) &_UDID_rowsums_grid_cpp, 3},
+    {"_UDID_sens_rowsums_cpp", (DL_FUNC) &_UDID_sens_rowsums_cpp, 6},
+    {"_UDID_mboot_sd_cpp", (DL_FUNC) &_UDID_mboot_sd_cpp, 2},
     {NULL, NULL, 0}
 };
 

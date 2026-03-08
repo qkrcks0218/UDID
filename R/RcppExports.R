@@ -64,3 +64,55 @@ kliep_bw_cpp <- function(x1, x2, centers, sigma_init, n_y_cols, fold = 5L, n_cd_
     .Call(`_UDID_kliep_bw_cpp`, x1, x2, centers, sigma_init, n_y_cols, fold, n_cd_iter)
 }
 
+#' Combined rowSums for E_alpha and E_Yalpha in one pass
+#'
+#' For each row i computes
+#'   E_alpha[i]  = sum_j OR[i,j] * Cond[i,j]
+#'   E_Yalpha[i] = sum_j Y_grid[j] * OR[i,j] * Cond[i,j]
+#' in a single C++ loop, avoiding the creation of temporary N x M matrices.
+#'
+#' @param OR     (N x M) odds-ratio grid matrix
+#' @param Cond   (N x M) conditional density grid  (already scaled by dY)
+#' @param Y_grid (M)     outcome grid values
+#' @return List with E_alpha (N) and E_Yalpha (N)
+rowsums_grid_cpp <- function(OR, Cond, Y_grid) {
+    .Call(`_UDID_rowsums_grid_cpp`, OR, Cond, Y_grid)
+}
+
+#' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
+#'
+#' For each row i and column j applies the sensitivity scale factor
+#'   scale[i,j] = exp(+half_log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
+#'              = exp(-half_log_Gamma)   otherwise
+#' directly during accumulation, avoiding construction of the scale and
+#' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
+#'
+#' @param OR_grid       (N x M) base odds-ratio grid (alpha_0)
+#' @param Cond          (N x M) conditional density grid
+#' @param Y_grid        (M)     outcome grid values
+#' @param mu_vec        (N)     per-observation baseline counterfactual mean
+#' @param half_log_Gamma  scalar = log(Gamma) / 2
+#' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
+#' @return List with E_alpha (N) and E_Yalpha (N)
+sens_rowsums_cpp <- function(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB) {
+    .Call(`_UDID_sens_rowsums_cpp`, OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB)
+}
+
+#' Multiplier bootstrap SD (memory-efficient, uses R RNG)
+#'
+#' Computes sd(colMeans(matrix(rnorm(N*NumBoot)+1, N, NumBoot) * V))
+#' using a single BLAS matrix-vector product instead of materialising
+#' the full N x NumBoot matrix in R.  Uses R's RNG so set.seed() in R
+#' controls reproducibility.
+#'
+#' Math:  colMeans(BootMat * V)[b]
+#'          = mean_V + (1/N) * sum_i V[i] * Z[i,b]   (Z ~ N(0,1))
+#'          = mean_V + (V^T Z)_b / N                  (BLAS DGEMV)
+#'
+#' @param V       length-N EIF vector
+#' @param NumBoot number of bootstrap replicates
+#' @return scalar standard deviation (same as sd(Mboot(V, N, NumBoot)))
+mboot_sd_cpp <- function(V, NumBoot) {
+    .Call(`_UDID_mboot_sd_cpp`, V, NumBoot)
+}
+
