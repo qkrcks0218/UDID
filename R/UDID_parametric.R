@@ -1,7 +1,7 @@
 #' UDID Parametric Estimator
 #'
 #' Parametric universal difference-in-differences estimator with sensitivity
-#' analysis (Park & Tchetgen Tchetgen, 2025). Nuisance models are fitted once;
+#' analysis (Park & Tchetgen Tchetgen, 2026+). Nuisance models are fitted once;
 #' ATT is computed for every Gamma value cheaply.
 #'
 #' @param Y0 Numeric vector of pre-treatment outcomes.
@@ -11,7 +11,80 @@
 #' @param type Outcome type: \code{"continuous"}, \code{"binary"}, or \code{"poisson"}.
 #' @param log_Gamma_seq Numeric scalar or vector of log(Gamma) sensitivity values (default 0).
 #'
-#' @return A data.frame with columns \code{log_Gamma}, \code{ATT}, and \code{SE}.
+#' @details
+#' \code{UDID_Parametric} implements the parametric universal
+#' difference-in-differences method (Park & Tchetgen Tchetgen, 2026+).
+#' All nuisance models are fitted once, and the ATT is computed for every
+#' value of the sensitivity parameter \eqn{\Gamma} at negligible additional
+#' cost.
+#'
+#' The key assumption is odds ratio equi-confounding (OREC), which states that
+#' \eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
+#' \deqn{
+#'   \alpha_t(y,x) =
+#'   \frac{f(Y_t^{(0)}=y \mid A=1, X=x)}{f(Y_t^{(0)}=y_R \mid A=1, X=x)}
+#'   \frac{f(Y_t^{(0)}=y_R \mid A=0, X=x)}{f(Y_t^{(0)}=y \mid A=0, X=x)}
+#' }
+#' and \eqn{y_R} is a reference value. Note that \eqn{\alpha_t(y_R,X)=1}.
+#'
+#' When the outcome is \strong{continuous}, the nuisance functions are estimated
+#' as follows:
+#' \itemize{
+#'   \item \eqn{f(Y_1 \mid A=0, X)} is modeled via a Box-Cox transformation
+#'   (Box and Cox, 1964) followed by a Gaussian linear model.
+#'   \item \eqn{f(Y_0 \mid A=1, X)/f(Y_0 \mid A=0, X)} is estimated via a
+#'   logistic regression density ratio classifier, which classifies numerator
+#'   versus denominator samples and converts predicted probabilities to density
+#'   ratios.
+#'   \item \eqn{f(A \mid X)} is estimated via logistic regression.
+#' }
+#'
+#' When the outcome is \strong{binary}, all conditional distributions
+#' (\eqn{f(A \mid X)}, \eqn{f(Y_0 \mid A, X)}, and \eqn{f(Y_1 \mid A=0, X)})
+#' are estimated via logistic regression (GLM with binomial family).
+#'
+#' When the outcome is \strong{Poisson} (\code{type = "poisson"}), the outcome
+#' regressions \eqn{f(Y_0 \mid A=0, X)} and \eqn{f(Y_1 \mid A=0, X)} are
+#' estimated via Poisson GLM, \eqn{f(A \mid X)} via logistic regression, and
+#' the odds ratio \eqn{\alpha_0} via a logistic density ratio classifier.
+#'
+#' Given these nuisance estimates, the average treatment effect on the treated
+#' (ATT) is obtained via the efficient influence function.
+#'
+#' For sensitivity analysis, given the sensitivity parameter \eqn{\Gamma \geq 1},
+#' we allow
+#' \deqn{
+#'   \alpha_1(y,x) \in
+#'   \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
+#' }
+#' The sensitivity bounds are computed using the same two-step approach
+#' described in \code{\link{UDID_Nonparametric}}.
+#'
+#' @return A named list with the following components:
+#'   \describe{
+#'     \item{\code{Effect}}{A single-row data frame reporting the estimated
+#'       average treatment effect on the treated (ATT) under the UDID method
+#'       at \code{log_Gamma = 0} and its asymptotic standard error (\code{SE}).}
+#'     \item{\code{Sensitivity}}{A data frame with one row per entry of
+#'       \code{log_Gamma_seq}, reporting the lower and upper sensitivity bounds
+#'       on the ATT (\code{ATT_LB}, \code{ATT_UB}) along with their asymptotic
+#'       standard errors (\code{SE_LB}, \code{SE_UB}).}
+#'   }
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#'   \item Box, G. E. P., & Cox, D. R. (1964).
+#'     An analysis of transformations.
+#'     \emph{Journal of the Royal Statistical Society, Series B}, 26(2), 211--243.
+#' }
+#'
+#' @seealso \code{\link{UDID_Nonparametric}} for the nonparametric version,
+#'   \code{\link{UDID_Sensitivity_Bounds}} and \code{\link{UDID_Sensitivity_Plot}}
+#'   for post-estimation sensitivity analysis tools.
+#'
 #' @export
 UDID_Parametric <- function(Y0,
                             Y1,

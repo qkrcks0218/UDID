@@ -17,13 +17,13 @@ UDID_Nonparametric_SensPara(
 )
 }
 \arguments{
-\item{Yn1}{Numeric vector of negative-one-period outcomes.}
+\item{Yn1}{Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).}
 
-\item{Y0}{Numeric vector of pre-treatment outcomes.}
+\item{Y0}{Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).}
 
 \item{A}{Binary treatment indicator (0/1).}
 
-\item{X}{Optional covariate matrix.}
+\item{X}{Optional covariate matrix. If \code{NULL}, a no-covariate version is used.}
 
 \item{type}{Outcome type: \code{"continuous"} or \code{"binary"}.}
 
@@ -36,9 +36,12 @@ corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
 range that summarizes the plausible spread of the sensitivity
 parameter ratio across outcome values and covariate values.}
 
-\item{seed}{Random seed.}
+\item{seed}{Random seed for reproducibility.}
 
-\item{hyperparameter}{Hyperparameter tuning \code{"fast"} or \code{"slow"}.}
+\item{hyperparameter}{Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
+If \code{"fast"}, the bandwidth of the Gaussian kernel in the density ratio
+estimator is determined by the median heuristic (Garreau et al., 2017).
+If \code{"slow"}, the bandwidth is selected via cross-validation.}
 
 \item{SL.list}{Integer vector selecting which learner groups to include (1--9)
 in the Super Learner ensemble passed to \code{MySL}.
@@ -51,5 +54,62 @@ A named numeric vector of quantiles of the sensitivity parameter ratio.
 }
 \description{
 Estimate the range of the sensitivity parameter from observed data
-using nonparametric Super Learner models.
+using nonparametric methods (Park & Tchetgen Tchetgen, 2026+).
+}
+\details{
+\code{UDID_Nonparametric_SensPara} uses an additional pre-pre-treatment
+period (\eqn{Y_{t=-1}}) to empirically calibrate the sensitivity parameter
+\eqn{\Gamma}. Under the odds ratio equi-confounding (OREC) assumption,
+\eqn{\alpha_0(y,x) = \alpha_{-1}(y,x)} for all \eqn{y} and \eqn{x},
+implying
+\deqn{
+  \frac{\alpha_0(y,x)}{\alpha_{-1}(y,x)} = 1
+}
+for all \eqn{y,x}. In practice, the OREC assumption may only hold
+approximately; the distribution of this ratio across outcome and
+covariate values indicates the plausible range of \eqn{\Gamma}.
+
+When the outcome is \strong{continuous}, the density ratios
+\eqn{f(Y \mid A=1, X)/f(Y \mid A=0, X)} at periods \eqn{t = 0} and
+\eqn{t = -1} are estimated via the Kullback-Leibler Importance Estimation
+Procedure (KLIEP; Sugiyama et al., 2007; Nguyen et al., 2007), implemented
+via the \code{densratio} R package (Makiyama, 2019).
+
+When the outcome is \strong{binary}, the density ratios are estimated via
+an ensemble of machine learning approaches using the Super Learner
+algorithm (van der Laan et al., 2007), implemented via the
+\code{SuperLearner} R package (Polley et al., 2025).
+
+The odds ratio functions \eqn{\alpha_0(y,x)} and \eqn{\alpha_{-1}(y,x)}
+are constructed from these ratios, and the function returns selected
+quantiles of \eqn{\alpha_0 / \alpha_{-1}} evaluated among treated units.
+}
+\references{
+\itemize{
+  \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+    A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+    \url{https://arxiv.org/abs/2212.13641}.
+  \item Garreau, D., Jitkrittum, W., & Kanagawa, M. (2017).
+    Large sample analysis of the median heuristic.
+    \url{https://arxiv.org/abs/1707.07269}.
+  \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
+    Direct importance estimation with model selection and its application to
+    covariate shift adaptation.
+    \emph{Advances in Neural Information Processing Systems}, 20.
+  \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
+    Estimating divergence functionals and the likelihood ratio by penalized
+    convex risk minimization.
+    \emph{Advances in Neural Information Processing Systems}, 20.
+  \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+    Super learner.
+    \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+  \item Makiyama, K. (2019).
+    densratio: Density Ratio Estimation. R package version 0.2.1.
+  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+    SuperLearner: Super Learner Prediction. R package version 2.0-40.
+}
+}
+\seealso{
+\code{\link{UDID_Parametric_SensPara}} for the parametric version,
+  \code{\link{UDID_Nonparametric}} for the main estimator.
 }

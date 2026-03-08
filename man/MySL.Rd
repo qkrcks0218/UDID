@@ -39,6 +39,45 @@ Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
 A fitted \code{SuperLearner} object.
 }
 \description{
-Fit an ensemble of machine learning algorithms using Super Learner
-with a configurable library of base learners.
+Fit an ensemble of machine learning algorithms using the Super Learner
+algorithm (van der Laan et al., 2007) with a configurable library of
+base learners.
+}
+\details{
+\code{MySL} is a convenience wrapper around the \code{SuperLearner}
+algorithm (van der Laan et al., 2007). It constructs a library of base
+learners from the following groups, selected via \code{SL.list}:
+\enumerate{
+  \item \strong{GLM}: generalized linear model.
+  \item \strong{Lasso/Ridge}: elastic net via \code{glmnet} with
+    \eqn{\alpha \in \{0, 0.5, 1\}}.
+  \item \strong{MARS}: multivariate adaptive regression splines via
+    \code{earth} with polynomial degrees 1--5.
+  \item \strong{GAM}: generalized additive model via \code{mgcv} with
+    spline degrees 1--5.
+  \item \strong{XGBoost}: gradient boosted trees via \code{xgboost} with
+    a grid over the number of trees and tree depth.
+  \item \strong{Polynomial spline}: polynomial MARS via \code{polymars}
+    with 2--4 knots.
+  \item \strong{Random forest}: via \code{ranger} with a grid over the
+    number of trees and \code{mtry}.
+  \item \strong{GBM}: gradient boosted model via \code{caret} with
+    \code{gbm} backend.
+  \item \strong{1-layer MLP}: single hidden-layer neural network via
+    \code{caret} with \code{mlpML} backend.
+}
+The Super Learner computes the optimal convex combination of these base
+learners using 5-fold cross-validation by default.
+
+For Poisson outcomes (\code{Ydist = poisson()}), only learner groups
+1 (GLM), 2 (lasso/ridge), 4 (GAM), and 5 (xgboost) are used.
+}
+\references{
+\itemize{
+  \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+    Super learner.
+    \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+    SuperLearner: Super Learner Prediction. R package version 2.0-40.
+}
 }

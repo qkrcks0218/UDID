@@ -1,11 +1,56 @@
 #' Sensitivity Bounds
 #'
-#' Compute ATT and CI bounds from a sensitivity analysis output.
+#' Compute ATT and confidence interval bounds from a sensitivity analysis
+#' output (Park & Tchetgen Tchetgen, 2026+).
 #'
-#' @param output A data.frame with columns \code{log_Gamma}, \code{ATT}, \code{SE}.
+#' @param output Output from \code{\link{UDID_Nonparametric}} or
+#'   \code{\link{UDID_Parametric}}. Accepts the full estimator output (a list
+#'   with a \code{Sensitivity} element), an already-processed bounds object
+#'   (with \code{bounds} and \code{crossings}), or a bare \code{Sensitivity}
+#'   data frame.
 #' @param alpha Confidence level (default 0.95).
 #'
-#' @return A list with \code{bounds} (data.frame) and \code{crossings} (list of zero-crossing values).
+#' @details
+#' \code{UDID_Sensitivity_Bounds} takes the sensitivity analysis output from
+#' \code{\link{UDID_Nonparametric}} or \code{\link{UDID_Parametric}} and
+#' computes:
+#' \itemize{
+#'   \item Lower and upper bounds on the ATT (\code{ATT_LB}, \code{ATT_UB})
+#'   as a function of \eqn{\log \Gamma}.
+#'   \item Pointwise \eqn{(1-\alpha)} confidence interval bounds
+#'   (\code{CI_LB}, \code{CI_UB}), defined as
+#'   \deqn{
+#'     CI_{LB} = ATT_{LB} - z_{\alpha/2} \cdot SE_{LB}, \qquad
+#'     CI_{UB} = ATT_{UB} + z_{\alpha/2} \cdot SE_{UB}.
+#'   }
+#'   \item Zero-crossing values: the interpolated \eqn{\log \Gamma} at which
+#'   each of \code{ATT_LB}, \code{ATT_UB}, \code{CI_LB}, and \code{CI_UB}
+#'   crosses zero. These indicate the degree of unmeasured confounding
+#'   required to nullify the treatment effect or its statistical significance.
+#' }
+#'
+#' @return A list with two components:
+#'   \describe{
+#'     \item{\code{bounds}}{A data frame with columns \code{log_Gamma},
+#'       \code{ATT_LB}, \code{SE_LB}, \code{ATT_UB}, \code{SE_UB},
+#'       \code{CI_LB}, and \code{CI_UB}.}
+#'     \item{\code{crossings}}{A named list with the interpolated
+#'       \eqn{\log \Gamma} values at which \code{ATT_LB}, \code{ATT_UB},
+#'       \code{CI_LB}, and \code{CI_UB} cross zero (\code{NA} if no
+#'       crossing is found).}
+#'   }
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#' }
+#'
+#' @seealso \code{\link{UDID_Sensitivity_Plot}} to visualize these bounds,
+#'   \code{\link{UDID_Nonparametric}} and \code{\link{UDID_Parametric}} for
+#'   the estimators that produce the input.
+#'
 #' @export
 UDID_Sensitivity_Bounds <- function(output, alpha = 0.95) {
   ## Accept: (1) full estimator output with $Sensitivity,
@@ -53,10 +98,11 @@ UDID_Sensitivity_Bounds <- function(output, alpha = 0.95) {
 ## ---- Sensitivity plot function ------------------------------
 #' Sensitivity Plot
 #'
-#' Plot ATT and confidence interval as a function of the sensitivity parameter.
+#' Plot ATT bounds and confidence intervals as a function of the sensitivity
+#' parameter \eqn{\log \Gamma} (Park & Tchetgen Tchetgen, 2026+).
 #'
-#' @param output A data.frame (or list with a \code{bounds} element) with
-#'   columns \code{log_Gamma}, \code{ATT}, \code{SE}.
+#' @param output Output from \code{\link{UDID_Nonparametric}},
+#'   \code{\link{UDID_Parametric}}, or \code{\link{UDID_Sensitivity_Bounds}}.
 #' @param alpha Confidence level (default 0.95).
 #' @param col_att_fill Fill color for ATT band.
 #' @param col_att_line Line color for ATT bounds.
@@ -69,7 +115,37 @@ UDID_Sensitivity_Bounds <- function(output, alpha = 0.95) {
 #' @param legend Logical; show legend.
 #' @param legend.pos Legend position.
 #'
-#' @return Invisibly returns the crossings list.
+#' @details
+#' \code{UDID_Sensitivity_Plot} visualizes the sensitivity analysis results
+#' by plotting:
+#' \itemize{
+#'   \item A shaded dark band for the ATT upper and lower bounds
+#'   (\code{ATT_UB}, \code{ATT_LB}) as a function of \eqn{\log \Gamma}.
+#'   \item A shaded light band for the pointwise confidence interval bounds
+#'   (\code{CI_UB}, \code{CI_LB}).
+#'   \item Vertical dashed lines at zero-crossing points, indicating the
+#'   values of \eqn{\log \Gamma} at which the ATT bounds or CI bounds cross
+#'   zero.
+#' }
+#' A horizontal reference line at zero is drawn by default.
+#' The zero-crossing values indicate how much unmeasured confounding
+#' (measured in \eqn{\log \Gamma}) would be required to either nullify
+#' the treatment effect estimate or render it statistically insignificant.
+#'
+#' @return Invisibly returns the crossings list from
+#'   \code{\link{UDID_Sensitivity_Bounds}}.
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#' }
+#'
+#' @seealso \code{\link{UDID_Sensitivity_Bounds}} for the underlying
+#'   computation, \code{\link{UDID_Nonparametric}} and
+#'   \code{\link{UDID_Parametric}} for the estimators.
+#'
 #' @export
 UDID_Sensitivity_Plot <- function(output,
                                   alpha        = 0.95,

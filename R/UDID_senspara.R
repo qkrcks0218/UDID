@@ -1,12 +1,12 @@
 #' UDID Parametric Sensitivity Parameter
 #'
 #' Estimate the range of the sensitivity parameter from observed data
-#' using parametric density ratio classifiers.
+#' using parametric density ratio classifiers (Park & Tchetgen Tchetgen, 2026+).
 #'
-#' @param Yn1 Numeric vector of negative-one-period outcomes.
-#' @param Y0 Numeric vector of pre-treatment outcomes.
+#' @param Yn1 Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).
+#' @param Y0 Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).
 #' @param A Binary treatment indicator (0/1).
-#' @param X Optional covariate matrix.
+#' @param X Optional covariate matrix. If \code{NULL}, a no-covariate version is used.
 #' @param type Outcome type: \code{"continuous"}, \code{"binary"}, or \code{"poisson"}.
 #' @param quantile.range Numeric vector of probabilities in (0,1) specifying
 #'   which quantiles to report of the ratio
@@ -16,8 +16,39 @@
 #'   corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
 #'   range that summarizes the plausible spread of the sensitivity
 #'   parameter ratio across outcome values and covariate values.
-#'   
+#'
+#' @details
+#' \code{UDID_Parametric_SensPara} uses an additional pre-pre-treatment period
+#' (\eqn{Y_{t=-1}}) to empirically calibrate the sensitivity parameter
+#' \eqn{\Gamma}. Under the odds ratio equi-confounding (OREC) assumption,
+#' \eqn{\alpha_0(y,x) = \alpha_{-1}(y,x)} for all \eqn{y} and \eqn{x},
+#' implying
+#' \deqn{
+#'   \frac{\alpha_0(y,x)}{\alpha_{-1}(y,x)} = 1
+#' }
+#' for all \eqn{y,x}. In practice, the OREC assumption may only hold
+#' approximately; the distribution of this ratio across outcome and
+#' covariate values indicates the plausible range of \eqn{\Gamma}.
+#'
+#' The density ratios \eqn{f(Y \mid A=1, X)/f(Y \mid A=0, X)} at periods
+#' \eqn{t = 0} and \eqn{t = -1} are estimated using logistic regression
+#' density ratio classifiers, and the odds ratio functions
+#' \eqn{\alpha_0(y,x)} and \eqn{\alpha_{-1}(y,x)} are constructed from
+#' these ratios. The function returns selected quantiles of the ratio
+#' \eqn{\alpha_0 / \alpha_{-1}} evaluated among treated units.
+#'
 #' @return A named numeric vector of quantiles of the sensitivity parameter ratio.
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#' }
+#'
+#' @seealso \code{\link{UDID_Nonparametric_SensPara}} for the nonparametric
+#'   version, \code{\link{UDID_Parametric}} for the main estimator.
+#'
 #' @export
 UDID_Parametric_SensPara <- function(Yn1,
                                      Y0,
@@ -135,12 +166,12 @@ UDID_Parametric_SensPara <- function(Yn1,
 #' UDID Nonparametric Sensitivity Parameter
 #'
 #' Estimate the range of the sensitivity parameter from observed data
-#' using nonparametric Super Learner models.
+#' using nonparametric methods (Park & Tchetgen Tchetgen, 2026+).
 #'
-#' @param Yn1 Numeric vector of negative-one-period outcomes.
-#' @param Y0 Numeric vector of pre-treatment outcomes.
+#' @param Yn1 Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).
+#' @param Y0 Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).
 #' @param A Binary treatment indicator (0/1).
-#' @param X Optional covariate matrix.
+#' @param X Optional covariate matrix. If \code{NULL}, a no-covariate version is used.
 #' @param type Outcome type: \code{"continuous"} or \code{"binary"}.
 #' @param quantile.range Numeric vector of probabilities in (0,1) specifying
 #'   which quantiles to report of the ratio
@@ -150,18 +181,75 @@ UDID_Parametric_SensPara <- function(Yn1,
 #'   corresponding to the 2.5th and 97.5th percentiles, giving a 95\%
 #'   range that summarizes the plausible spread of the sensitivity
 #'   parameter ratio across outcome values and covariate values.
-#' @param seed Random seed.
+#' @param seed Random seed for reproducibility.
 #' @param hyperparameter Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
-#'   If \code{"fast"}, the bandwidth of the kernel density estimator is chosen using the rule-of-thumb method,
-#'   and the bandwidth of the Gaussian kernel in the density ratio estimator is determined by the median heuristic.
-#'   If \code{"slow"}, these bandwidth parameters are selected via cross-validation.
+#'   If \code{"fast"}, the bandwidth of the Gaussian kernel in the density ratio
+#'   estimator is determined by the median heuristic (Garreau et al., 2017).
+#'   If \code{"slow"}, the bandwidth is selected via cross-validation.
 #' @param SL.list Integer vector selecting which learner groups to include (1--9)
 #'   in the Super Learner ensemble passed to \code{MySL}.
 #'   Available groups: 1 = GLM, 2 = lasso/ridge, 3 = earth,
 #'   4 = GAM, 5 = xgboost, 6 = polynomial spline, 7 = random forest,
 #'   8 = gbm, 9 = 1-layer MLP.
 #'
+#' @details
+#' \code{UDID_Nonparametric_SensPara} uses an additional pre-pre-treatment
+#' period (\eqn{Y_{t=-1}}) to empirically calibrate the sensitivity parameter
+#' \eqn{\Gamma}. Under the odds ratio equi-confounding (OREC) assumption,
+#' \eqn{\alpha_0(y,x) = \alpha_{-1}(y,x)} for all \eqn{y} and \eqn{x},
+#' implying
+#' \deqn{
+#'   \frac{\alpha_0(y,x)}{\alpha_{-1}(y,x)} = 1
+#' }
+#' for all \eqn{y,x}. In practice, the OREC assumption may only hold
+#' approximately; the distribution of this ratio across outcome and
+#' covariate values indicates the plausible range of \eqn{\Gamma}.
+#'
+#' When the outcome is \strong{continuous}, the density ratios
+#' \eqn{f(Y \mid A=1, X)/f(Y \mid A=0, X)} at periods \eqn{t = 0} and
+#' \eqn{t = -1} are estimated via the Kullback-Leibler Importance Estimation
+#' Procedure (KLIEP; Sugiyama et al., 2007; Nguyen et al., 2007), implemented
+#' via the \code{densratio} R package (Makiyama, 2019).
+#'
+#' When the outcome is \strong{binary}, the density ratios are estimated via
+#' an ensemble of machine learning approaches using the Super Learner
+#' algorithm (van der Laan et al., 2007), implemented via the
+#' \code{SuperLearner} R package (Polley et al., 2025).
+#'
+#' The odds ratio functions \eqn{\alpha_0(y,x)} and \eqn{\alpha_{-1}(y,x)}
+#' are constructed from these ratios, and the function returns selected
+#' quantiles of \eqn{\alpha_0 / \alpha_{-1}} evaluated among treated units.
+#'
 #' @return A named numeric vector of quantiles of the sensitivity parameter ratio.
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#'   \item Garreau, D., Jitkrittum, W., & Kanagawa, M. (2017).
+#'     Large sample analysis of the median heuristic.
+#'     \url{https://arxiv.org/abs/1707.07269}.
+#'   \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
+#'     Direct importance estimation with model selection and its application to
+#'     covariate shift adaptation.
+#'     \emph{Advances in Neural Information Processing Systems}, 20.
+#'   \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
+#'     Estimating divergence functionals and the likelihood ratio by penalized
+#'     convex risk minimization.
+#'     \emph{Advances in Neural Information Processing Systems}, 20.
+#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+#'     Super learner.
+#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+#'   \item Makiyama, K. (2019).
+#'     densratio: Density Ratio Estimation. R package version 0.2.1.
+#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
+#' }
+#'
+#' @seealso \code{\link{UDID_Parametric_SensPara}} for the parametric version,
+#'   \code{\link{UDID_Nonparametric}} for the main estimator.
+#'
 #' @export
 UDID_Nonparametric_SensPara <- function(Yn1,
                                         Y0,

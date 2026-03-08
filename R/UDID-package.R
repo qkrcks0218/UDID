@@ -1,7 +1,34 @@
 #' UDID: Universal Difference-in-Differences Estimator
 #'
 #' Parametric and nonparametric universal difference-in-differences
-#' estimators with sensitivity analysis (Park & Tchetgen Tchetgen, 2025).
+#' estimators with sensitivity analysis (Park & Tchetgen Tchetgen, 2026+).
+#'
+#' @details
+#' The \code{UDID} package provides parametric and nonparametric estimators
+#' for the average treatment effect on the treated (ATT) under the universal
+#' difference-in-differences (UDID) framework. The key identifying assumption
+#' is odds ratio equi-confounding (OREC), a flexible alternative to the
+#' standard parallel trends assumption.
+#'
+#' The main functions are:
+#' \itemize{
+#'   \item \code{\link{UDID_Nonparametric}}: nonparametric UDID estimator
+#'     with 2-fold cross-fitting.
+#'   \item \code{\link{UDID_Parametric}}: parametric UDID estimator.
+#'   \item \code{\link{UDID_Sensitivity_Bounds}}: compute sensitivity bounds.
+#'   \item \code{\link{UDID_Sensitivity_Plot}}: visualize sensitivity analysis.
+#'   \item \code{\link{UDID_Nonparametric_SensPara}}: nonparametric calibration
+#'     of the sensitivity parameter.
+#'   \item \code{\link{UDID_Parametric_SensPara}}: parametric calibration of
+#'     the sensitivity parameter.
+#' }
+#'
+#' @references
+#' \itemize{
+#'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+#'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+#'     \url{https://arxiv.org/abs/2212.13641}.
+#' }
 #'
 #' @docType package
 #' @name UDID-package

@@ -55,5 +55,26 @@ A \code{SuperLearner} object with adjusted coefficients.
 }
 \description{
 Re-estimate Super Learner coefficients after filtering base learners
-by propensity score positivity.
+by propensity score positivity (van der Laan et al., 2007).
+}
+\details{
+\code{PS.Adjust} takes an already-fitted \code{SuperLearner} object and
+re-computes the ensemble coefficients after restricting the library to a
+subset of base learners specified by \code{POS.Z}. This is useful when
+certain base learners produce predictions that violate the propensity score
+positivity assumption (i.e., estimated probabilities near 0 or 1).
+
+The function re-fits the meta-learner (non-negative least squares by
+default) on the cross-validated predictions from the retained base learners,
+and re-evaluates all retained learners on the full data to produce
+updated predictions.
+}
+\references{
+\itemize{
+  \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+    Super learner.
+    \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+    SuperLearner: Super Learner Prediction. R package version 2.0-40.
+}
 }

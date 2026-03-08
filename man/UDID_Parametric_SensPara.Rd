@@ -14,13 +14,13 @@ UDID_Parametric_SensPara(
 )
 }
 \arguments{
-\item{Yn1}{Numeric vector of negative-one-period outcomes.}
+\item{Yn1}{Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).}
 
-\item{Y0}{Numeric vector of pre-treatment outcomes.}
+\item{Y0}{Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).}
 
 \item{A}{Binary treatment indicator (0/1).}
 
-\item{X}{Optional covariate matrix.}
+\item{X}{Optional covariate matrix. If \code{NULL}, a no-covariate version is used.}
 
 \item{type}{Outcome type: \code{"continuous"}, \code{"binary"}, or \code{"poisson"}.}
 
@@ -38,5 +38,36 @@ A named numeric vector of quantiles of the sensitivity parameter ratio.
 }
 \description{
 Estimate the range of the sensitivity parameter from observed data
-using parametric density ratio classifiers.
+using parametric density ratio classifiers (Park & Tchetgen Tchetgen, 2026+).
+}
+\details{
+\code{UDID_Parametric_SensPara} uses an additional pre-pre-treatment period
+(\eqn{Y_{t=-1}}) to empirically calibrate the sensitivity parameter
+\eqn{\Gamma}. Under the odds ratio equi-confounding (OREC) assumption,
+\eqn{\alpha_0(y,x) = \alpha_{-1}(y,x)} for all \eqn{y} and \eqn{x},
+implying
+\deqn{
+  \frac{\alpha_0(y,x)}{\alpha_{-1}(y,x)} = 1
+}
+for all \eqn{y,x}. In practice, the OREC assumption may only hold
+approximately; the distribution of this ratio across outcome and
+covariate values indicates the plausible range of \eqn{\Gamma}.
+
+The density ratios \eqn{f(Y \mid A=1, X)/f(Y \mid A=0, X)} at periods
+\eqn{t = 0} and \eqn{t = -1} are estimated using logistic regression
+density ratio classifiers, and the odds ratio functions
+\eqn{\alpha_0(y,x)} and \eqn{\alpha_{-1}(y,x)} are constructed from
+these ratios. The function returns selected quantiles of the ratio
+\eqn{\alpha_0 / \alpha_{-1}} evaluated among treated units.
+}
+\references{
+\itemize{
+  \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+    A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+    \url{https://arxiv.org/abs/2212.13641}.
+}
+}
+\seealso{
+\code{\link{UDID_Nonparametric_SensPara}} for the nonparametric
+  version, \code{\link{UDID_Parametric}} for the main estimator.
 }

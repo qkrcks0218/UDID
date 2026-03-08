@@ -1,7 +1,8 @@
 #' Super Learner Wrapper
 #'
-#' Fit an ensemble of machine learning algorithms using Super Learner
-#' with a configurable library of base learners.
+#' Fit an ensemble of machine learning algorithms using the Super Learner
+#' algorithm (van der Laan et al., 2007) with a configurable library of
+#' base learners.
 #'
 #' @param Data A data frame containing the outcome and covariates.
 #' @param locY Column index for the outcome variable.
@@ -15,7 +16,46 @@
 #' @param PS.thr Propensity score threshold (default 1e-3).
 #' @param CVlist Optional list of cross-validation fold assignments.
 #'
+#' @details
+#' \code{MySL} is a convenience wrapper around the \code{SuperLearner}
+#' algorithm (van der Laan et al., 2007). It constructs a library of base
+#' learners from the following groups, selected via \code{SL.list}:
+#' \enumerate{
+#'   \item \strong{GLM}: generalized linear model.
+#'   \item \strong{Lasso/Ridge}: elastic net via \code{glmnet} with
+#'     \eqn{\alpha \in \{0, 0.5, 1\}}.
+#'   \item \strong{MARS}: multivariate adaptive regression splines via
+#'     \code{earth} with polynomial degrees 1--5.
+#'   \item \strong{GAM}: generalized additive model via \code{mgcv} with
+#'     spline degrees 1--5.
+#'   \item \strong{XGBoost}: gradient boosted trees via \code{xgboost} with
+#'     a grid over the number of trees and tree depth.
+#'   \item \strong{Polynomial spline}: polynomial MARS via \code{polymars}
+#'     with 2--4 knots.
+#'   \item \strong{Random forest}: via \code{ranger} with a grid over the
+#'     number of trees and \code{mtry}.
+#'   \item \strong{GBM}: gradient boosted model via \code{caret} with
+#'     \code{gbm} backend.
+#'   \item \strong{1-layer MLP}: single hidden-layer neural network via
+#'     \code{caret} with \code{mlpML} backend.
+#' }
+#' The Super Learner computes the optimal convex combination of these base
+#' learners using 5-fold cross-validation by default.
+#'
+#' For Poisson outcomes (\code{Ydist = poisson()}), only learner groups
+#' 1 (GLM), 2 (lasso/ridge), 4 (GAM), and 5 (xgboost) are used.
+#'
 #' @return A fitted \code{SuperLearner} object.
+#'
+#' @references
+#' \itemize{
+#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+#'     Super learner.
+#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
+#' }
+#'
 #' @export
 MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
                   SL.list=c(1:9), obsWeights=NULL,
@@ -351,7 +391,7 @@ MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
 #' Propensity Score Adjusted Super Learner
 #'
 #' Re-estimate Super Learner coefficients after filtering base learners
-#' by propensity score positivity.
+#' by propensity score positivity (van der Laan et al., 2007).
 #'
 #' @param Fitted.SL2 A fitted \code{SuperLearner} object.
 #' @param POS.Z Integer vector of column indices to keep.
@@ -368,7 +408,29 @@ MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
 #' @param obsWeights Optional observation weights.
 #' @param env Environment for function lookup.
 #'
+#' @details
+#' \code{PS.Adjust} takes an already-fitted \code{SuperLearner} object and
+#' re-computes the ensemble coefficients after restricting the library to a
+#' subset of base learners specified by \code{POS.Z}. This is useful when
+#' certain base learners produce predictions that violate the propensity score
+#' positivity assumption (i.e., estimated probabilities near 0 or 1).
+#'
+#' The function re-fits the meta-learner (non-negative least squares by
+#' default) on the cross-validated predictions from the retained base learners,
+#' and re-evaluates all retained learners on the full data to produce
+#' updated predictions.
+#'
 #' @return A \code{SuperLearner} object with adjusted coefficients.
+#'
+#' @references
+#' \itemize{
+#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+#'     Super learner.
+#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
+#' }
+#'
 #' @export
 PS.Adjust <- function (Fitted.SL2,POS.Z,
                        Y, X, newX = NULL, family = stats::gaussian(), SL.library,

@@ -20,8 +20,8 @@ UDID_Sensitivity_Plot(
 )
 }
 \arguments{
-\item{output}{A data.frame (or list with a \code{bounds} element) with
-columns \code{log_Gamma}, \code{ATT}, \code{SE}.}
+\item{output}{Output from \code{\link{UDID_Nonparametric}},
+\code{\link{UDID_Parametric}}, or \code{\link{UDID_Sensitivity_Bounds}}.}
 
 \item{alpha}{Confidence level (default 0.95).}
 
@@ -46,8 +46,39 @@ columns \code{log_Gamma}, \code{ATT}, \code{SE}.}
 \item{legend.pos}{Legend position.}
 }
 \value{
-Invisibly returns the crossings list.
+Invisibly returns the crossings list from
+  \code{\link{UDID_Sensitivity_Bounds}}.
 }
 \description{
-Plot ATT and confidence interval as a function of the sensitivity parameter.
+Plot ATT bounds and confidence intervals as a function of the sensitivity
+parameter \eqn{\log \Gamma} (Park & Tchetgen Tchetgen, 2026+).
+}
+\details{
+\code{UDID_Sensitivity_Plot} visualizes the sensitivity analysis results
+by plotting:
+\itemize{
+  \item A shaded dark band for the ATT upper and lower bounds
+  (\code{ATT_UB}, \code{ATT_LB}) as a function of \eqn{\log \Gamma}.
+  \item A shaded light band for the pointwise confidence interval bounds
+  (\code{CI_UB}, \code{CI_LB}).
+  \item Vertical dashed lines at zero-crossing points, indicating the
+  values of \eqn{\log \Gamma} at which the ATT bounds or CI bounds cross
+  zero.
+}
+A horizontal reference line at zero is drawn by default.
+The zero-crossing values indicate how much unmeasured confounding
+(measured in \eqn{\log \Gamma}) would be required to either nullify
+the treatment effect estimate or render it statistically insignificant.
+}
+\references{
+\itemize{
+  \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+    A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+    \url{https://arxiv.org/abs/2212.13641}.
+}
+}
+\seealso{
+\code{\link{UDID_Sensitivity_Bounds}} for the underlying
+  computation, \code{\link{UDID_Nonparametric}} and
+  \code{\link{UDID_Parametric}} for the estimators.
 }

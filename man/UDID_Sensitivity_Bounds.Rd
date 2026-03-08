@@ -7,13 +7,58 @@
 UDID_Sensitivity_Bounds(output, alpha = 0.95)
 }
 \arguments{
-\item{output}{A data.frame with columns \code{log_Gamma}, \code{ATT}, \code{SE}.}
+\item{output}{Output from \code{\link{UDID_Nonparametric}} or
+\code{\link{UDID_Parametric}}. Accepts the full estimator output (a list
+with a \code{Sensitivity} element), an already-processed bounds object
+(with \code{bounds} and \code{crossings}), or a bare \code{Sensitivity}
+data frame.}
 
 \item{alpha}{Confidence level (default 0.95).}
 }
 \value{
-A list with \code{bounds} (data.frame) and \code{crossings} (list of zero-crossing values).
+A list with two components:
+  \describe{
+    \item{\code{bounds}}{A data frame with columns \code{log_Gamma},
+      \code{ATT_LB}, \code{SE_LB}, \code{ATT_UB}, \code{SE_UB},
+      \code{CI_LB}, and \code{CI_UB}.}
+    \item{\code{crossings}}{A named list with the interpolated
+      \eqn{\log \Gamma} values at which \code{ATT_LB}, \code{ATT_UB},
+      \code{CI_LB}, and \code{CI_UB} cross zero (\code{NA} if no
+      crossing is found).}
+  }
 }
 \description{
-Compute ATT and CI bounds from a sensitivity analysis output.
+Compute ATT and confidence interval bounds from a sensitivity analysis
+output (Park & Tchetgen Tchetgen, 2026+).
+}
+\details{
+\code{UDID_Sensitivity_Bounds} takes the sensitivity analysis output from
+\code{\link{UDID_Nonparametric}} or \code{\link{UDID_Parametric}} and
+computes:
+\itemize{
+  \item Lower and upper bounds on the ATT (\code{ATT_LB}, \code{ATT_UB})
+  as a function of \eqn{\log \Gamma}.
+  \item Pointwise \eqn{(1-\alpha)} confidence interval bounds
+  (\code{CI_LB}, \code{CI_UB}), defined as
+  \deqn{
+    CI_{LB} = ATT_{LB} - z_{\alpha/2} \cdot SE_{LB}, \qquad
+    CI_{UB} = ATT_{UB} + z_{\alpha/2} \cdot SE_{UB}.
+  }
+  \item Zero-crossing values: the interpolated \eqn{\log \Gamma} at which
+  each of \code{ATT_LB}, \code{ATT_UB}, \code{CI_LB}, and \code{CI_UB}
+  crosses zero. These indicate the degree of unmeasured confounding
+  required to nullify the treatment effect or its statistical significance.
+}
+}
+\references{
+\itemize{
+  \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+    A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+    \url{https://arxiv.org/abs/2212.13641}.
+}
+}
+\seealso{
+\code{\link{UDID_Sensitivity_Plot}} to visualize these bounds,
+  \code{\link{UDID_Nonparametric}} and \code{\link{UDID_Parametric}} for
+  the estimators that produce the input.
 }

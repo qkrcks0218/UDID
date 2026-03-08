@@ -2,7 +2,7 @@
 % Please edit documentation in R/UDID_nonparametric.R
 \name{UDID_Nonparametric}
 \alias{UDID_Nonparametric}
-\title{UDID Nonparametric Estimator (2-fold cross-fitting)}
+\title{UDID Nonparametric Estimator}
 \usage{
 UDID_Nonparametric(
   Y0,
@@ -35,8 +35,10 @@ UDID_Nonparametric(
 \item{seed}{Random seed for reproducibility.}
 
 \item{hyperparameter}{Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
-If \code{"fast"}, the bandwidth of the kernel density estimator is chosen using the rule-of-thumb method,
-and the bandwidth of the Gaussian kernel in the density ratio estimator is determined by the median heuristic.
+If \code{"fast"}, the bandwidth of the kernel density estimator is chosen
+using the rule-of-thumb method (Silverman, 1986),
+and the bandwidth of the Gaussian kernel in the density ratio estimator is
+determined by the median heuristic (Garreau et al., 2017).
 If \code{"slow"}, these bandwidth parameters are selected via cross-validation.}
 
 \item{SL.list}{Integer vector selecting which learner groups to include (1--9)
@@ -91,13 +93,154 @@ A named list with the following components:
       one column per grid point of Y (501 equally spaced points for
       continuous outcomes; two points \{0, 1\} for binary outcomes).
       Matrix entries give the estimated conditional density
-      \eqn{f(y | A = a, X_i)} at each grid point. For binary outcomes,
+      \eqn{f(y \mid A = a, X_i)} at each grid point. For binary outcomes,
       \code{fY1A1} is derived from the UDID parallel-trends odds-ratio
       assumption at \eqn{\Gamma = 1}.}
   }
 }
 \description{
 Nonparametric universal difference-in-differences estimator with sensitivity
-analysis using Super Learner ensembles and 2-fold cross-fitting
-(Park & Tchetgen Tchetgen, 2025).
+analysis (Park & Tchetgen Tchetgen, 2026+). Nuisance models are fitted via 2-fold cross-fitting.
+ATT is computed for every Gamma value cheaply.
+}
+\details{
+\code{UDID_Nonparametric} implements the nonparametric universal
+difference-in-differences method with 2-fold cross-fitting.
+
+The key assumption is odds ratio equi-confounding (OREC), which states that
+\eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
+\deqn{
+  \alpha_t(y,x) =
+  \frac{f(Y_t^{(0)}=y \mid A=1, X=x)}{f(Y_t^{(0)}=y_R \mid A=1, X=x)}
+  \frac{f(Y_t^{(0)}=y_R \mid A=0, X=x)}{f(Y_t^{(0)}=y \mid A=0, X=x)}
+}
+and \eqn{y_R} is a reference value. Note that \eqn{\alpha_t(y_R,X)=1}.
+
+When the outcome is \strong{continuous}, the nuisance functions are estimated
+as follows:
+\itemize{
+  \item \eqn{f(Y_0 \mid A=0, X)} is estimated via the nonparametric kernel density
+  estimator (Hall et al., 2004), implemented via the \code{np} R package
+  (Hayfield and Racine, 2008).
+  \item \eqn{f(Y_0 \mid A=1, X)/f(Y_0 \mid A=0, X)} and
+  \eqn{f(Y_1 \mid A=0, X)/f(Y_0 \mid A=0, X)} are estimated via the
+  Kullback-Leibler Importance Estimation Procedure (KLIEP;
+  Sugiyama et al., 2007; Nguyen et al., 2007), implemented via the
+  \code{densratio} R package (Makiyama, 2019).
+  \item \eqn{f(A \mid X)} is estimated via an ensemble of machine learning
+  approaches using the Super Learner algorithm (van der Laan et al., 2007),
+  implemented via the \code{SuperLearner} R package (Polley et al., 2025).
+}
+
+When the outcome is \strong{binary}, all conditional distributions
+(\eqn{f(A \mid X)}, \eqn{f(Y_0 \mid A, X)}, and \eqn{f(Y_1 \mid A=0, X)})
+are estimated via an ensemble of machine learning approaches using the Super
+Learner algorithm (van der Laan et al., 2007), implemented via the
+\code{SuperLearner} R package (Polley et al., 2025).
+
+Given these nuisance estimates, the average treatment effect on the treated
+(ATT) is obtained via the efficient influence function.
+
+For sensitivity analysis, given the sensitivity parameter \eqn{\Gamma \geq 1},
+we allow
+\deqn{
+  \alpha_1(y,x) \in
+  \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
+}
+When the outcome is \strong{continuous}, we implement the following two-step
+approach in order to maximize the deviation.
+\itemize{
+  \item For each \eqn{X}, obtain
+  \eqn{y_c(X) := E[Y_1^{(0)} \mid A=1, X]}, which equals
+  \deqn{
+    y_c(X) = \frac{E[Y_0\,\alpha_0(Y_0,X) \mid A=1,X]}{E[\alpha_0(Y_0,X) \mid A=1,X]}
+  }
+  under the OREC assumption.
+  \item Then, \eqn{\tilde{\alpha}_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
+  and \eqn{\tilde{\alpha}_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
+  \deqn{
+    \Gamma^{UB}(y) =
+    \left\{
+    \begin{array}{ll}
+      \Gamma^{-1/2} & \text{if } y <    y_c(X) \\
+      \Gamma^{1/2}  & \text{if } y \geq y_c(X)
+    \end{array}
+    \right.
+    \,, \quad
+    \Gamma^{LB}(y) =
+    \left\{
+    \begin{array}{ll}
+      \Gamma^{1/2}  & \text{if } y <    y_c(X) \\
+      \Gamma^{-1/2} & \text{if } y \geq y_c(X)
+    \end{array}
+    \right.
+  }
+  To satisfy the boundary condition of the odds ratio, i.e.,
+  \eqn{\alpha_t(y_R, X) = 1}, \eqn{\tilde{\alpha}_1^{UB}} and
+  \eqn{\tilde{\alpha}_1^{LB}} are normalized as
+  \deqn{
+    \alpha_1^{UB}(y,X) =
+      \frac{\tilde{\alpha}_1^{UB}(y,X)}{\tilde{\alpha}_1^{UB}(y_R,X)},
+    \qquad
+    \alpha_1^{LB}(y,X) =
+      \frac{\tilde{\alpha}_1^{LB}(y,X)}{\tilde{\alpha}_1^{LB}(y_R,X)}.
+  }
+}
+
+When the outcome is \strong{binary}, the reference value is fixed to
+\eqn{y_R = 0}. Therefore,
+\deqn{
+  \alpha_1^{UB}(y,X) =
+  \left\{
+  \begin{array}{ll}
+    1                           & \text{if } y = 0 \\
+    \Gamma \cdot \alpha_0(1,X) & \text{if } y = 1
+  \end{array}
+  \right.
+  \,, \quad
+  \alpha_1^{LB}(y,X) =
+  \left\{
+  \begin{array}{ll}
+    1                               & \text{if } y = 0 \\
+    \Gamma^{-1} \cdot \alpha_0(1,X) & \text{if } y = 1
+  \end{array}
+  \right.
+}
+
+Based on \eqn{\alpha_1^{UB}(y,X)} and \eqn{\alpha_1^{LB}(y,X)}, we obtain
+the upper and lower bounds on the ATT and their standard errors.
+}
+\references{
+\itemize{
+  \item Park, C., & Tchetgen Tchetgen, E. (2026+).
+    A Universal Nonparametric Framework for Difference-in-Differences Analyses.
+    \url{https://arxiv.org/abs/2212.13641}.
+  \item Silverman, B. W. (1986).
+    \emph{Density Estimation for Statistics and Data Analysis}.
+    London: Chapman and Hall.
+  \item Garreau, D., Jitkrittum, W., & Kanagawa, M. (2017).
+    Large sample analysis of the median heuristic.
+    \url{https://arxiv.org/abs/1707.07269}.
+  \item Hall, P., Racine, J. S., & Li, Q. (2004).
+    Cross-validation and the estimation of conditional probability densities.
+    \emph{Journal of the American Statistical Association}, 99, 1015--1026.
+  \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
+    Direct importance estimation with model selection and its application to
+    covariate shift adaptation.
+    \emph{Advances in Neural Information Processing Systems}, 20.
+  \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
+    Estimating divergence functionals and the likelihood ratio by penalized
+    convex risk minimization.
+    \emph{Advances in Neural Information Processing Systems}, 20.
+  \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+    Super learner.
+    \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
+  \item Hayfield, T., & Racine, J. S. (2008).
+    Nonparametric econometrics: The np package.
+    \emph{Journal of Statistical Software}, 27, 1--32.
+  \item Makiyama, K. (2019).
+    densratio: Density Ratio Estimation. R package version 0.2.1.
+  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+    SuperLearner: Super Learner Prediction. R package version 2.0-40.
+}
 }
