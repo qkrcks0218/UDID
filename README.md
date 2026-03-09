@@ -36,7 +36,7 @@ In other words, the generalized odds ratio function is stable across time period
 
 ### ATT Identification
 
-Under OREC, the nuisance functions $\beta_1(x) = E[\alpha_1(Y_1, X) \mid A=0, X=x]^{-1} \cdot \Pr(A=1 \mid X=x) / \Pr(A=0 \mid X=x)$ and the counterfactual mean $\mu(x) = E[Y_1(0) \mid A=1, X=x]$ are identified as:
+Under OREC, the counterfactual mean $\mu(x) = E[Y_1(0) \mid A=1, X=x]$ is identified as:
 
 $$\mu(x) = \frac{E \left[Y_1  \alpha_0(Y_1, X) \mid A=0,   X=x\right]}{E \left[\alpha_0(Y_1, X) \mid A=0,   X=x\right]},$$
 
@@ -46,19 +46,17 @@ where $\alpha_1$ is replaced by the identified $\alpha_0$ under OREC. The ATT is
 
 The **efficient influence function (EIF)** for $\tau$ in the nonparametric model under OREC (Theorem 5.1 in Park and Tchetgen Tchetgen, 2026+) is:
 
-$$\mathrm{IF}(O) = \frac{A Y_1 - \varphi_0(O)  - A \tau }{\Pr(A=1)},$$
+$$\mathrm{IF}(O) = \frac{A Y_1 - \phi_0(O)  - A \tau }{\Pr(A=1)},$$
 
 where
 
-$$\varphi_0(O) = \beta_1(X)  \alpha_1(Y_1, X)  (1-A) \left(Y_1 - \mu(X)\right) + A  \mu(X) + (2A-1)  R(Y_0, A, X) \left(Y_0 - \mu(X)\right),$$
+$$\phi_0(O) = \beta_1(X)  \alpha_1(Y_1, X)  (1-A) \left(Y_1 - \mu(X)\right) + A  \mu(X) + (2A-1)  R(Y_0, A, X) \left(Y_0 - \mu(X)\right). $$
 
-and $R(y, a, x)$ is the density ratio
-
-$$R(y, a, x) = \beta_1(x) \left[\frac{a}{\beta_0(x)} + (1-a)  \alpha_1(y, x)\right]\frac{f_1(y \mid A=0, X=x)}{f_0(y \mid A=0, X=x)}  \mathbf{1}\{(y,x)\in\mathcal{S}\}.$$
+Here, $\beta_t(x) = \Pr(A=1 \mid Y_t(0)=y_R,X=x)/ \Pr(A=0 \mid Y_t(0)=y_R,X=x)$ is the baseline odds and $R(y, a, x) = f_1(y,1,x)/f_0(y,a,x)$ is the density ratio; these functions are identified under OREC; see Park and Tchetgen Tchetgen (2026+) for details.
 
 The ATT is estimated as the sample mean of the estimated uncentered EIF after cross-fitting (Chernozhukov et al., 2017):
 
-$$\hat{\tau} = \frac{\mathbb{P}_n \left[A Y_1 - \hat{\varphi}_0(O)\right]}{\mathbb{P}_n(A)},$$
+$$\hat{\tau} = \frac{\mathbb{P}_n \left[A Y_1 - \hat{\phi}_0(O)\right]}{\mathbb{P}_n(A)},$$
 
 where $\mathbb{P}_n$ denotes the empirical average computed across the cross-fitted folds.
 
