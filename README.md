@@ -74,7 +74,7 @@ In each fold, nuisance functions are estimated on one half of the data and evalu
 
 3. **Propensity score** $\Pr(A=1 \mid X)$: estimated via an ensemble of machine learning algorithms using the Super Learner (van der Laan et al., 2007), implemented in the `SuperLearner` R package (Polley et al., 2025). Available base learners include GLM, lasso/ridge, earth, GAM, XGBoost, polynomial splines, random forests, gradient boosting machines, and one-layer neural networks.
 
-**Binary outcomes.** All conditional distributions, $ \Pr(A=1 \mid X) $, $\Pr(Y_0=1 \mid A, X)$, and $\Pr(Y_1=1 \mid A=0, X)$, are estimated via Super Learner.
+**Binary outcomes.** All conditional distributions, $\Pr(A=1 \mid X)$, $\Pr(Y_0=1 \mid A, X)$, and $\Pr(Y_1=1 \mid A=0, X)$, are estimated via Super Learner.
 
 Given the estimated nuisance functions, $\hat{\alpha}_1$, $\hat{\beta}_1$, $\hat{\mu}$, and $\hat{R}$ are constructed from the estimated densities and density ratios, and plugged into the EIF to obtain $\hat{\tau}$.
 
