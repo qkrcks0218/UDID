@@ -1,8 +1,10 @@
-#' UDID Parametric Estimator
+#' Parametric UDID Estimator (Experimental/Beta Version)
 #'
-#' Parametric universal difference-in-differences estimator with sensitivity
-#' analysis (Park & Tchetgen Tchetgen, 2026+). Nuisance models are fitted once;
-#' ATT is computed for every Gamma value cheaply.
+#' Computes the average treatment effect on the treated (ATT)
+#' under the universal difference-in-differences (UDID) framework
+#' (Park and Tchetgen Tchetgen, 2026+). Nuisance functions are
+#' estimated parametrically based on parametric models. Sensitivity
+#' analysis is supported for user-specified sensitivity parameter values.
 #'
 #' @param Y0 Numeric vector of pre-treatment outcomes.
 #' @param Y1 Numeric vector of post-treatment outcomes.
@@ -13,10 +15,10 @@
 #'
 #' @details
 #' \code{UDID_Parametric} implements the parametric universal
-#' difference-in-differences method (Park & Tchetgen Tchetgen, 2026+).
-#' All nuisance models are fitted once, and the ATT is computed for every
-#' value of the sensitivity parameter \eqn{\Gamma} at negligible additional
-#' cost.
+#' difference-in-differences method. 
+#' Nuisance functions are fitted once based on parametric models. 
+#' The ATT estimate is computed for every value of the sensitivity parameter \eqn{\Gamma} 
+#' at negligible additional cost.
 #'
 #' The key assumption is odds ratio equi-confounding (OREC), which states that
 #' \eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
@@ -48,8 +50,7 @@
 #' estimated via Poisson GLM, \eqn{f(A \mid X)} via logistic regression, and
 #' the odds ratio \eqn{\alpha_0} via a logistic density ratio classifier.
 #'
-#' Given these nuisance estimates, the average treatment effect on the treated
-#' (ATT) is obtained via the efficient influence function.
+#' Given these nuisance estimates, the ATT estimate is obtained via the efficient influence function.
 #'
 #' For sensitivity analysis, given the sensitivity parameter \eqn{\Gamma \geq 1},
 #' we allow

@@ -17,9 +17,10 @@
 #' @param CVlist Optional list of cross-validation fold assignments.
 #'
 #' @details
-#' \code{MySL} is a convenience wrapper around the \code{SuperLearner}
-#' algorithm (van der Laan et al., 2007). It constructs a library of base
-#' learners from the following groups, selected via \code{SL.list}:
+#' \code{MySL} is a convenience wrapper of the \code{SuperLearner}
+#' algorithm (van der Laan et al., 2007) implemented in the
+#' \code{SuperLearner} package (Polley et al., 2025). The function builds
+#' a library of candidate learners from the groups specified in \code{SL.list}:
 #' \enumerate{
 #'   \item \strong{GLM}: generalized linear model.
 #'   \item \strong{Lasso/Ridge}: elastic net via \code{glmnet} with
@@ -49,11 +50,11 @@
 #'
 #' @references
 #' \itemize{
+#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
 #'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
 #'     Super learner.
 #'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
-#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
-#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
 #' }
 #'
 #' @export
@@ -388,50 +389,7 @@ MySL <- function( Data, locY, locX, Ydist=stats::gaussian(),
 
 
 
-#' Propensity Score Adjusted Super Learner
-#'
-#' Re-estimate Super Learner coefficients after filtering base learners
-#' by propensity score positivity (van der Laan et al., 2007).
-#'
-#' @param Fitted.SL2 A fitted \code{SuperLearner} object.
-#' @param POS.Z Integer vector of column indices to keep.
-#' @param Y Outcome vector.
-#' @param X Covariate data frame.
-#' @param newX Optional new covariate data for prediction.
-#' @param family A family object.
-#' @param SL.library Character vector of learner names.
-#' @param method Meta-learner method (default \code{"method.NNLS"}).
-#' @param id Optional id vector.
-#' @param verbose Logical; print progress.
-#' @param control Control list for Super Learner.
-#' @param cvControl Cross-validation control list.
-#' @param obsWeights Optional observation weights.
-#' @param env Environment for function lookup.
-#'
-#' @details
-#' \code{PS.Adjust} takes an already-fitted \code{SuperLearner} object and
-#' re-computes the ensemble coefficients after restricting the library to a
-#' subset of base learners specified by \code{POS.Z}. This is useful when
-#' certain base learners produce predictions that violate the propensity score
-#' positivity assumption (i.e., estimated probabilities near 0 or 1).
-#'
-#' The function re-fits the meta-learner (non-negative least squares by
-#' default) on the cross-validated predictions from the retained base learners,
-#' and re-evaluates all retained learners on the full data to produce
-#' updated predictions.
-#'
-#' @return A \code{SuperLearner} object with adjusted coefficients.
-#'
-#' @references
-#' \itemize{
-#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
-#'     Super learner.
-#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
-#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
-#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
-#' }
-#'
-#' @export
+#' @keywords internal
 PS.Adjust <- function (Fitted.SL2,POS.Z,
                        Y, X, newX = NULL, family = stats::gaussian(), SL.library,
                        method = "method.NNLS", id = NULL, verbose = FALSE,

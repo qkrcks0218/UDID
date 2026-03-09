@@ -1,7 +1,8 @@
-#' UDID Parametric Sensitivity Parameter
+#' Sensitivity Parameter from Parametric UDID Model (Experimental/Beta Version)
 #'
-#' Estimate the range of the sensitivity parameter from observed data
-#' using parametric density ratio classifiers (Park & Tchetgen Tchetgen, 2026+).
+#' Estimates the range of the sensitivity parameter using observed
+#' data prior to treatment adoption, based on parametric methods
+#' under the UDID framework (Park and Tchetgen Tchetgen, 2026+).
 #'
 #' @param Yn1 Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).
 #' @param Y0 Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).
@@ -163,10 +164,11 @@ UDID_Parametric_SensPara <- function(Yn1,
 ## NONPARAMETRIC — SENSITIVITY PARAMETER
 ## ============================================================
 
-#' UDID Nonparametric Sensitivity Parameter
+#' Sensitivity Parameter from Nonparametric UDID Model
 #'
-#' Estimate the range of the sensitivity parameter from observed data
-#' using nonparametric methods (Park & Tchetgen Tchetgen, 2026+).
+#' Estimates the range of the sensitivity parameter using observed
+#' data prior to treatment adoption, based on nonparametric methods
+#' under the UDID framework (Park and Tchetgen Tchetgen, 2026+).
 #'
 #' @param Yn1 Numeric vector of negative-one-period outcomes (\eqn{Y_{t=-1}}).
 #' @param Y0 Numeric vector of pre-treatment outcomes (\eqn{Y_{t=0}}).
@@ -230,21 +232,21 @@ UDID_Parametric_SensPara <- function(Yn1,
 #'   \item Garreau, D., Jitkrittum, W., & Kanagawa, M. (2017).
 #'     Large sample analysis of the median heuristic.
 #'     \url{https://arxiv.org/abs/1707.07269}.
-#'   \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
-#'     Direct importance estimation with model selection and its application to
-#'     covariate shift adaptation.
-#'     \emph{Advances in Neural Information Processing Systems}, 20.
+#'   \item Makiyama, K. (2019).
+#'     densratio: Density Ratio Estimation. R package version 0.2.1.
 #'   \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
 #'     Estimating divergence functionals and the likelihood ratio by penalized
 #'     convex risk minimization.
 #'     \emph{Advances in Neural Information Processing Systems}, 20.
+#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
+#'   \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
+#'     Direct importance estimation with model selection and its application to
+#'     covariate shift adaptation.
+#'     \emph{Advances in Neural Information Processing Systems}, 20.
 #'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
 #'     Super learner.
 #'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
-#'   \item Makiyama, K. (2019).
-#'     densratio: Density Ratio Estimation. R package version 0.2.1.
-#'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
-#'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
 #' }
 #'
 #' @seealso \code{\link{UDID_Parametric_SensPara}} for the parametric version,

@@ -1,15 +1,19 @@
-#' UDID Nonparametric Estimator
+#' Nonparametric UDID Estimator
 #'
-#' Nonparametric universal difference-in-differences estimator with sensitivity
-#' analysis (Park & Tchetgen Tchetgen, 2026+). Nuisance models are fitted via 2-fold cross-fitting.
-#' ATT is computed for every Gamma value cheaply.
-#'
+#' Computes the average treatment effect on the treated (ATT)
+#' under the universal difference-in-differences (UDID) framework
+#' (Park and Tchetgen Tchetgen, 2026+). Nuisance functions are
+#' estimated nonparametrically using 2-fold cross-fitting,
+#' combining kernel density estimation, nonparametric density
+#' ratio estimation, and machine learning methods. Sensitivity
+#' analysis is supported for user-specified sensitivity parameter values.
+#' 
 #' @param Y0 Numeric vector of pre-treatment outcomes.
 #' @param Y1 Numeric vector of post-treatment outcomes.
 #' @param A Binary treatment indicator (0/1).
 #' @param X Optional covariate matrix. If \code{NULL}, a no-covariate version is used.
 #' @param type Outcome type: \code{"continuous"} or \code{"binary"}.
-#' @param log_Gamma_seq Numeric scalar or vector of log(Gamma) sensitivity values (default 0).
+#' @param log_Gamma_seq Numeric scalar or vector of \eqn{\log(\Gamma)} sensitivity values (default 0).
 #' @param seed Random seed for reproducibility.
 #' @param hyperparameter Hyperparameter tuning method: \code{"fast"} or \code{"slow"}.
 #'   If \code{"fast"}, the bandwidth of the kernel density estimator is chosen
@@ -30,7 +34,12 @@
 #'
 #' @details
 #' \code{UDID_Nonparametric} implements the nonparametric universal
-#' difference-in-differences method with 2-fold cross-fitting.
+#' difference-in-differences method. 
+#' Nuisance functions are estimated nonparametrically using 2-fold cross-fitting (Chernozhukov et al., 2017),
+#' combining kernel density estimation, nonparametric density
+#' ratio estimation, and machine learning methods. 
+#' The ATT estimate is computed for every value of the sensitivity parameter \eqn{\Gamma} 
+#' at negligible additional cost.
 #'
 #' The key assumption is odds ratio equi-confounding (OREC), which states that
 #' \eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
@@ -63,8 +72,7 @@
 #' Learner algorithm (van der Laan et al., 2007), implemented via the
 #' \code{SuperLearner} R package (Polley et al., 2025).
 #'
-#' Given these nuisance estimates, the average treatment effect on the treated
-#' (ATT) is obtained via the efficient influence function.
+#' Given these nuisance estimates, the ATT estimate is obtained via the efficient influence function.
 #'
 #' For sensitivity analysis, given the sensitivity parameter \eqn{\Gamma \geq 1},
 #' we allow
@@ -182,33 +190,36 @@
 #'   \item Park, C., & Tchetgen Tchetgen, E. (2026+).
 #'     A Universal Nonparametric Framework for Difference-in-Differences Analyses.
 #'     \url{https://arxiv.org/abs/2212.13641}.
-#'   \item Silverman, B. W. (1986).
-#'     \emph{Density Estimation for Statistics and Data Analysis}.
-#'     London: Chapman and Hall.
+#'   \item Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018).
+#'     Double/debiased machine learning for treatment and structural parameters.
+#'     \emph{The Econometric Journal}, 21: C1-C68.
 #'   \item Garreau, D., Jitkrittum, W., & Kanagawa, M. (2017).
 #'     Large sample analysis of the median heuristic.
 #'     \url{https://arxiv.org/abs/1707.07269}.
 #'   \item Hall, P., Racine, J. S., & Li, Q. (2004).
 #'     Cross-validation and the estimation of conditional probability densities.
 #'     \emph{Journal of the American Statistical Association}, 99, 1015--1026.
-#'   \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
-#'     Direct importance estimation with model selection and its application to
-#'     covariate shift adaptation.
-#'     \emph{Advances in Neural Information Processing Systems}, 20.
-#'   \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
-#'     Estimating divergence functionals and the likelihood ratio by penalized
-#'     convex risk minimization.
-#'     \emph{Advances in Neural Information Processing Systems}, 20.
-#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
-#'     Super learner.
-#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
 #'   \item Hayfield, T., & Racine, J. S. (2008).
 #'     Nonparametric econometrics: The np package.
 #'     \emph{Journal of Statistical Software}, 27, 1--32.
 #'   \item Makiyama, K. (2019).
 #'     densratio: Density Ratio Estimation. R package version 0.2.1.
+#'   \item Nguyen, X., Wainwright, M. J., & Jordan, M. (2007).
+#'     Estimating divergence functionals and the likelihood ratio by penalized
+#'     convex risk minimization.
+#'     \emph{Advances in Neural Information Processing Systems}, 20.
 #'   \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
 #'     SuperLearner: Super Learner Prediction. R package version 2.0-40.
+#'   \item Silverman, B. W. (1986).
+#'     \emph{Density Estimation for Statistics and Data Analysis}.
+#'     London: Chapman and Hall.
+#'   \item Sugiyama, M., Nakajima, S., Kashima, H., Buenau, P., & Kawanabe, M. (2007).
+#'     Direct importance estimation with model selection and its application to
+#'     covariate shift adaptation.
+#'     \emph{Advances in Neural Information Processing Systems}, 20.
+#'   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
+#'     Super learner.
+#'     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
 #' }
 #'
 #' @export

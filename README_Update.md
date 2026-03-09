@@ -64,7 +64,7 @@ where $\mathbb{P}_n$ denotes the empirical average computed across the cross-fit
 
 ### Nuisance Function Estimation
 
-All nuisance functions are estimated via 2-fold cross-fitting to avoid overfitting bias and ensure valid inference.
+All nuisance functions are estimated via 2-fold cross-fitting to avoid overfitting bias and ensure valid inference. 
 In each fold, nuisance functions are estimated on one half of the data and evaluated on the other.
 
 **Continuous outcomes.** Three nuisance components are estimated nonparametrically:
