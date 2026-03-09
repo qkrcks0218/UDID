@@ -52,7 +52,8 @@ where
 
 $$\phi_0(O) = \beta_1(X)  \alpha_1(Y_1, X)  (1-A) \left(Y_1 - \mu(X)\right) + A  \mu(X) + (2A-1)  R(Y_0, A, X) \left(Y_0 - \mu(X)\right). $$
 
-Here, $\beta_t(x) = \Pr(A=1 \mid Y_t(0)=y_R,X=x)/ \Pr(A=0 \mid Y_t(0)=y_R,X=x)$ is the baseline odds and $R(y, a, x) = f_1(y,1,x)/f_0(y,a,x)$ is the density ratio; these functions are identified under OREC; see Park and Tchetgen Tchetgen (2026+) for details.
+Here, $\beta_1(x) = \Pr(A=1 \mid Y_1(0)=y_R,X=x)/ \Pr(A=0 \mid Y_1(0)=y_R,X=x)$ is the baseline odds at time $t=1$ and $R(y, a, x) = f_1(y,1,x)/f_0(y,a,x)$ is the density ratio. 
+These functions are identified under OREC; see Park and Tchetgen Tchetgen (2026+) for details.
 
 The ATT is estimated as the sample mean of the estimated uncentered EIF after cross-fitting (Chernozhukov et al., 2017):
 
@@ -73,7 +74,7 @@ In each fold, nuisance functions are estimated on one half of the data and evalu
 
 3. **Propensity score** $\Pr(A=1 \mid X)$: estimated via an ensemble of machine learning algorithms using the Super Learner (van der Laan et al., 2007), implemented in the `SuperLearner` R package (Polley et al., 2025). Available base learners include GLM, lasso/ridge, earth, GAM, XGBoost, polynomial splines, random forests, gradient boosting machines, and one-layer neural networks.
 
-**Binary outcomes.** All conditional distributions—$\Pr(A=1 \mid X)$, $\Pr(Y_0=1 \mid A, X)$, and $\Pr(Y_1=1 \mid A=0, X)$—are estimated via Super Learner.
+**Binary outcomes.** All conditional distributions, $ \Pr(A=1 \mid X) $, $\Pr(Y_0=1 \mid A, X)$, and $\Pr(Y_1=1 \mid A=0, X)$, are estimated via Super Learner.
 
 Given the estimated nuisance functions, $\hat{\alpha}_1$, $\hat{\beta}_1$, $\hat{\mu}$, and $\hat{R}$ are constructed from the estimated densities and density ratios, and plugged into the EIF to obtain $\hat{\tau}$.
 
