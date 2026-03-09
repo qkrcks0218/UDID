@@ -26,7 +26,7 @@ Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ 
 
 $$\alpha_t(y, x) = \frac{f_t(y \mid A=1,\, X=x)}{f_t(y_R \mid A=1,\, X=x)} \cdot \frac{f_t(y_R \mid A=0,\, X=x)}{f_t(y \mid A=0,\, X=x)}.$$
 
-By construction, $\alpha_t(y_R, x) = 1$ for all $x$, and $\alpha_t(y, x) = 1$ for all $(y, x)$ whenever $Y_t(0) \perp\!\!\!\perp A \mid X$.
+By construction, $\alpha_t(y_R, x) = 1$ for all $x$, and $\alpha_t(y, x) = 1$ for all $(y, x)$ whenever $Y_t(0) \perp\perp A \mid X$.
 
 The key assumption of the UDID framework is **odds ratio equi-confounding (OREC)**, which states that
 
@@ -36,11 +36,11 @@ In other words, the generalized odds ratio function is stable across time period
 
 ### ATT Identification
 
-Under OREC, the nuisance functions $\beta_1^*(x) = E[\alpha_1(Y_1, X) \mid A=0, X=x]^{-1} \cdot \Pr(A=1 \mid X=x) / \Pr(A=0 \mid X=x)$ and the counterfactual mean $\mu^*(x) = E[Y_1(0) \mid A=1, X=x]$ are identified as:
+Under OREC, the counterfactual mean $\mu (x) = E[Y_1(0) \mid A=1, X=x]$ are identified as:
 
-$$\mu^*(x) = \frac{E\!\left[Y_1\,\alpha_0(Y_1, X) \mid A=0,\, X=x\right]}{E\!\left[\alpha_0(Y_1, X) \mid A=0,\, X=x\right]},$$
+$$\mu (x) = \frac{E\!\left[Y_1\,\alpha_0(Y_1, X) \mid A=0,\, X=x\right]}{E\!\left[\alpha_0(Y_1, X) \mid A=0,\, X=x\right]},$$
 
-where $\alpha_1$ is replaced by the identified $\alpha_0$ under OREC. The ATT is then identified via $\tau^* = E[\mu^*(X) \mid A=1]$.
+where $\alpha_1$ is replaced by the identified $\alpha_0$ under OREC. The ATT is then identified via $\tau^* = E[\mu (X) \mid A=1]$.
 
 ### Efficient Influence Function
 
