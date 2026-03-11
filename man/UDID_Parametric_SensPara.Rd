@@ -2,7 +2,7 @@
 % Please edit documentation in R/UDID_senspara.R
 \name{UDID_Parametric_SensPara}
 \alias{UDID_Parametric_SensPara}
-\title{UDID Parametric Sensitivity Parameter}
+\title{Sensitivity Parameter from Parametric UDID Model (Experimental/Beta Version)}
 \usage{
 UDID_Parametric_SensPara(
   Yn1,
@@ -37,8 +37,9 @@ parameter ratio across outcome values and covariate values.}
 A named numeric vector of quantiles of the sensitivity parameter ratio.
 }
 \description{
-Estimate the range of the sensitivity parameter from observed data
-using parametric density ratio classifiers (Park & Tchetgen Tchetgen, 2026+).
+Estimates the range of the sensitivity parameter using observed
+data prior to treatment adoption, based on parametric methods
+under the UDID framework (Park and Tchetgen Tchetgen, 2026+).
 }
 \details{
 \code{UDID_Parametric_SensPara} uses an additional pre-pre-treatment period

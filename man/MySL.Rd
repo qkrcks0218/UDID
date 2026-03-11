@@ -44,9 +44,10 @@ algorithm (van der Laan et al., 2007) with a configurable library of
 base learners.
 }
 \details{
-\code{MySL} is a convenience wrapper around the \code{SuperLearner}
-algorithm (van der Laan et al., 2007). It constructs a library of base
-learners from the following groups, selected via \code{SL.list}:
+\code{MySL} is a convenience wrapper of the \code{SuperLearner}
+algorithm (van der Laan et al., 2007) implemented in the
+\code{SuperLearner} package (Polley et al., 2025). The function builds
+a library of candidate learners from the groups specified in \code{SL.list}:
 \enumerate{
   \item \strong{GLM}: generalized linear model.
   \item \strong{Lasso/Ridge}: elastic net via \code{glmnet} with
@@ -74,10 +75,10 @@ For Poisson outcomes (\code{Ydist = poisson()}), only learner groups
 }
 \references{
 \itemize{
+  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
+    SuperLearner: Super Learner Prediction. R package version 2.0-40.
   \item van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007).
     Super learner.
     \emph{Statistical Applications in Genetics and Molecular Biology}, 6(1).
-  \item Polley, E., LeDell, E., Kennedy, C., Lendle, S., & van der Laan, M. (2025).
-    SuperLearner: Super Learner Prediction. R package version 2.0-40.
 }
 }

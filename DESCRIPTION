@@ -1,13 +1,10 @@
 Package: UDID
-Title: Universal Difference-in-Differences Estimator with Sensitivity Analysis
+Title: Universal Difference-in-Differences
 Version: 0.0.0
 Authors@R: person("Chan", "Park", role = c("aut","cre"),
            email = "parkchan@illinois.com",
            comment = "Park & Tchetgen Tchetgen, 2025")
-Description: Parametric and nonparametric universal difference-in-differences
-    (UDID) estimators with sensitivity analysis. Includes efficient influence
-    function based estimation, cross-fitting via Super Learner ensembles,
-    and tools for sensitivity bounds and plotting.
+Description: Parametric and nonparametric universal difference-in-differences (UDID) estimation based on the efficient influence function, with tools for sensitivity analysis and visualization.
 License: GPL (>= 3)
 Depends: R (>= 3.5.0)
 Imports:

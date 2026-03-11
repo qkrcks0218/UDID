@@ -13,8 +13,17 @@ estimators with sensitivity analysis (Park & Tchetgen Tchetgen, 2026+).
 The \code{UDID} package provides parametric and nonparametric estimators
 for the average treatment effect on the treated (ATT) under the universal
 difference-in-differences (UDID) framework. The key identifying assumption
-is odds ratio equi-confounding (OREC), a flexible alternative to the
-standard parallel trends assumption.
+is odds ratio equi-confounding (OREC), which states that
+\eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
+\deqn{
+  \alpha_t(y,x) =
+  \frac{f(Y_t^{(0)}=y \mid A=1, X=x)}{f(Y_t^{(0)}=y_R \mid A=1, X=x)}
+  \frac{f(Y_t^{(0)}=y_R \mid A=0, X=x)}{f(Y_t^{(0)}=y \mid A=0, X=x)}
+  =
+  \frac{Pr(A=1 \mid Y_t^{(0)}=y, X=x)}{Pr(A=1 \mid Y_t^{(0)}=y_R, X=x)}
+  \frac{Pr(A=0 \mid Y_t^{(0)}=y_R, X=x)}{Pr(A=0 \mid Y_t^{(0)}=y, X=x)}
+}
+and \eqn{y_R} is a reference value.
 
 The main functions are:
 \itemize{
