@@ -22,7 +22,7 @@ Under consistency ($Y_t = Y_t(A)$ a.s.) and no anticipation ($Y_0(0) = Y_0(1)$ a
 
 ### Odds Ratio Equi-Confounding (OREC) Assumption
 
-Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in \{0, 1\}$, define the **generalized odds ratio function**:
+Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in \{ 0, 1 \}$, define the **generalized odds ratio function**:
 
 $$\alpha_t(y, x) = \frac{f_t(y \mid A=1,   X=x)}{f_t(y_R \mid A=1,   X=x)} \cdot \frac{f_t(y_R \mid A=0,   X=x)}{f_t(y \mid A=0,   X=x)}.$$
 
