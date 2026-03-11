@@ -14,7 +14,7 @@ install_github("qkrcks0218/UDID")
 
 ## Methodology
 
-Consider a panel study with two time periods $t \in \{0, 1\}$, where $t = 0$ is pre-treatment and $t = 1$ is post-treatment. Let $A \in \{0, 1\}$ be a binary treatment indicator, $Y_t$ the observed outcome at time $t$, $Y_t(a)$ the potential outcome at time $t$ under treatment $A = a$, and $X \in \mathbb{R}^d$ a vector of pre-treatment covariates. The target estimand is the **average treatment effect on the treated (ATT)**:
+Consider a panel study with two time periods $t \in \\{0, 1\\}$, where $t = 0$ is pre-treatment and $t = 1$ is post-treatment. Let $A \in \{0, 1\}$ be a binary treatment indicator, $Y_t$ the observed outcome at time $t$, $Y_t(a)$ the potential outcome at time $t$ under treatment $A = a$, and $X \in \mathbb{R}^d$ a vector of pre-treatment covariates. The target estimand is the **average treatment effect on the treated (ATT)**:
 
 $$\tau = E \left[Y_1(1) - Y_1(0) \mid A = 1\right].$$
 
@@ -22,7 +22,7 @@ Under consistency ($Y_t = Y_t(A)$ a.s.) and no anticipation ($Y_0(0) = Y_0(1)$ a
 
 ### Odds Ratio Equi-Confounding (OREC) Assumption
 
-Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in { 0, 1 }$, define the **generalized odds ratio function**:
+Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in \{ 0, 1 \}$, define the **generalized odds ratio function**:
 
 $$\alpha_t(y, x) = \frac{f_t(y \mid A=1,   X=x)}{f_t(y_R \mid A=1,   X=x)} \cdot \frac{f_t(y_R \mid A=0,   X=x)}{f_t(y \mid A=0,   X=x)}.$$
 
