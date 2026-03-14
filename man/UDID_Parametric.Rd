@@ -80,50 +80,64 @@ Given these nuisance estimates, the ATT estimate is obtained via the efficient i
 For sensitivity analysis, given the sensitivity parameter \eqn{\Gamma \geq 1},
 we allow
 \deqn{
-  \alpha_1(y,x) \in
-  \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
+ \frac{ 
+ \displaystyle{\alpha_1(y,x)}
+ }{
+ \displaystyle{\alpha_0(y,x)}
+ }
+   \in
+  \left[\Gamma^{-1} ,  \Gamma  \right].
+  \qquad \qquad (1)
 }
 When the outcome is \strong{continuous}, we implement the following algorithm 
 in order to compute the maximum and minimum deviations.
 \itemize{
-  \item For each \eqn{X}, define \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
-  and \eqn{\alpha_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
+  \item For each \eqn{X}, define \eqn{\alpha_1^{LB}(y,X) := w^{max}(y,X)\,\alpha_0(y,X)}
+  and \eqn{\alpha_1^{UB}(y,X) := w^{min}(y,X)\,\alpha_0(y,X)}, where
   \deqn{
-    \Gamma^{UB}(y) =
+    w^{max}(y,X) =
     \left\{
     \begin{array}{ll}
-      \Gamma^{-1} & \text{if } y <    m^{UB}(X) \text{ and } y \neq y_R \\
-      \Gamma      & \text{if } y \geq m^{UB}(X) \text{ and } y \neq y_R \\
+      \Gamma      & \text{if } y \geq m^{max}(X) \text{ and } y \neq y_R \\
+      \Gamma^{-1} & \text{if } y <    m^{max}(X) \text{ and } y \neq y_R \\
       1           & \text{if } y = y_R 
     \end{array}
     \right.
     }
     \deqn{
-    \Gamma^{LB}(y) =
+    w^{min}(y,X) =
     \left\{
     \begin{array}{ll}
-      \Gamma      & \text{if } y <    m^{LB}(X) \text{ and } y \neq y_R \\
-      \Gamma^{-1} & \text{if } y \geq m^{LB}(X) \text{ and } y \neq y_R \\
+      \Gamma^{-1} & \text{if } y \geq m^{min}(X) \text{ and } y \neq y_R \\
+      \Gamma      & \text{if } y <    m^{min}(X) \text{ and } y \neq y_R \\
       1           & \text{if } y = y_R 
     \end{array}
     \right.
   }
-  \eqn{\Gamma^{UB}(y_R)=\Gamma^{LB}(y_R)=1} encodes the boundary condition of the odds ratio: \eqn{\alpha(y_R,X)=1}.
-  \item The cutoff values \eqn{m^{UB}(X)} and \eqn{m^{LB}(X)} are the roots for the equations:
+The weights \eqn{w^{max}} and \eqn{w^{min}} make the conditional
+counterfactual mean \eqn{E[Y_1^{(0)} \mid A=1, X]} as large or as
+small as possible subject to the constraint
+(1). Consequently, they produce the
+lower and upper bounds of the ATT. The condition
+\eqn{w^{max}(y_R,X)=w^{min}(y_R,X)=1} enforces the boundary
+constraint \eqn{\alpha(y_R,X)=1}.
+  \item The cutoff values \eqn{m^{max}(X)} and \eqn{m^{min}(X)} are the roots for the equations:
   \deqn{
-    m^{UB}(X) = 
-    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{UB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} } 
+    m^{max}(X) = 
+    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{LB}(Y_1,X)  \mid A=0,X] } }
+    {\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
   }
   \deqn{
-    m^{LB}(X) = 
-    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{LB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
+    m^{min}(X) = 
+    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{UB}(Y_1,X)  \mid A=0,X] } }
+    {\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} } 
   } 
   }
 
 When the outcome is \strong{binary}, the reference value is fixed to
 \eqn{y_R = 0}. Therefore,
 \deqn{
-  \alpha_1^{UB}(y,X) =
+  \alpha_1^{LB}(y,X) =
   \left\{
   \begin{array}{ll}
     1                           & \text{if } y = 0 \\
@@ -132,7 +146,7 @@ When the outcome is \strong{binary}, the reference value is fixed to
   \right.
   }
   \deqn{
-  \alpha_1^{LB}(y,X) =
+  \alpha_1^{UB}(y,X) =
   \left\{
   \begin{array}{ll}
     1                               & \text{if } y = 0 \\
@@ -141,8 +155,8 @@ When the outcome is \strong{binary}, the reference value is fixed to
   \right.
 }
 
-Based on \eqn{\alpha_1^{UB}(y,X)} and \eqn{\alpha_1^{LB}(y,X)}, we obtain
-the upper and lower bounds on the ATT and their standard errors.
+Based on \eqn{\alpha_1^{LB}(y,X)} and \eqn{\alpha_1^{UB}(y,X)}, we obtain
+the lower and upper bounds on the ATT and their standard errors.
 }
 \references{
 \itemize{
