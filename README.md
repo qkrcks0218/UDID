@@ -189,7 +189,7 @@ log(UDID.SensPara)
 
 UDID.Sensitivity <- UDID_Nonparametric(Data$Y0,Data$Y1,Data$A,Data[,X.pos],
                                        type="continuous",
-                                       log_Gamma_seq = seq(0,1,by=0.1))
+                                       log_Gamma_seq = seq(0,0.5,by=0.1))
 
 UDID.Sens.Bound <- UDID_Sensitivity_Bounds(UDID.Sensitivity)
 
