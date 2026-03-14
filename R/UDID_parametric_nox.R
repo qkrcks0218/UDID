@@ -143,30 +143,31 @@ UDID_Parametric_NoX <- function(Y0,
   ## ----------------------------------------------------------
   
   .compute_eif_noX <- function(type, Gamma, direction,
-                               mu_base_vec, mu_base_grid) {
+                               mu_base_vec) {
     if (type == "continuous") {
       if (Gamma == 1) {
-        alpha1_grid <- alpha0_grid
+        rs <- rowsums_grid_cpp(alpha0_grid, wt_mat, Y1_grid_raw)
+        E_alpha1   <- rs$E_alpha
+        E_Y1alpha1 <- rs$E_Yalpha
         alpha1_Y0   <- alpha0_Y0
         alpha1_Y1   <- alpha0_Y1
       } else {
+        rs <- sens_rowsums_mroot_cpp(alpha0_grid, wt_mat, Y1_grid_raw,
+                                     log(Gamma), direction == "UB")
+        E_alpha1   <- rs$E_alpha
+        E_Y1alpha1 <- rs$E_Yalpha
+        m_root     <- rs$m_root
+        
         if (direction == "UB") {
-          scale_grid <- sens_scale_UB(Y1_grid_mat, mu_base_grid, Gamma)
-          scale_Y0   <- sens_scale_UB(Y0, mu_base_vec, Gamma)
-          scale_Y1   <- sens_scale_UB(Y1, mu_base_vec, Gamma)
+          scale_Y0   <- sens_scale_UB(Y0, m_root, Gamma)
+          scale_Y1   <- sens_scale_UB(Y1, m_root, Gamma)
         } else {
-          scale_grid <- sens_scale_LB(Y1_grid_mat, mu_base_grid, Gamma)
-          scale_Y0   <- sens_scale_LB(Y0, mu_base_vec, Gamma)
-          scale_Y1   <- sens_scale_LB(Y1, mu_base_vec, Gamma)
+          scale_Y0   <- sens_scale_LB(Y0, m_root, Gamma)
+          scale_Y1   <- sens_scale_LB(Y1, m_root, Gamma)
         }
-        alpha1_grid <- alpha0_grid * scale_grid
         alpha1_Y0   <- alpha0_Y0  * scale_Y0
         alpha1_Y1   <- alpha0_Y1  * scale_Y1
       }
-      alpha1_grid[, !valid_grid] <- 0
-
-      E_alpha1   <- rowSums(alpha1_grid * wt_mat)
-      E_Y1alpha1 <- rowSums(Y1_grid_mat * alpha1_grid * wt_mat)
 
       hat.OR1           <- alpha1_Y1
       hat.BetaA1.plugin <- safe_ratio(odds_X, E_alpha1)
@@ -244,12 +245,10 @@ UDID_Parametric_NoX <- function(Y0,
   
   ## Baseline (Gamma = 1)
   base <- .compute_eif_noX(type, Gamma = 1, direction = "none",
-                           mu_base_vec = NULL, mu_base_grid = NULL)
+                           mu_base_vec = NULL)
   mu_base_vec <- base$Mu1
   
-  if (type == "continuous") {
-    mu_base_grid <- matrix(mu_base_vec, N, n_grid)
-  } else if (type == "poisson") {
+  if (type == "poisson") {
     mu_base_grid <- matrix(mu_base_vec, N, ng)
   } else {
     mu_base_grid <- NULL
@@ -269,8 +268,13 @@ UDID_Parametric_NoX <- function(Y0,
                             ATT_UB = base$ATT, SE_UB = base$SE, Gamma = Gamma)
     } else {
       ## UB/LB for counterfactual mean => LB/UB for ATT
-      res_UB <- .compute_eif_noX(type, Gamma, "UB", mu_base_vec, mu_base_grid)
-      res_LB <- .compute_eif_noX(type, Gamma, "LB", mu_base_vec, mu_base_grid)
+      if (type == "poisson") {
+        res_UB <- .compute_eif_noX(type, Gamma, "UB", mu_base_vec, mu_base_grid)
+        res_LB <- .compute_eif_noX(type, Gamma, "LB", mu_base_vec, mu_base_grid)
+      } else {
+        res_UB <- .compute_eif_noX(type, Gamma, "UB", mu_base_vec)
+        res_LB <- .compute_eif_noX(type, Gamma, "LB", mu_base_vec)
+      }
       results[[gi]] <- list(ATT_LB = res_UB$ATT, SE_LB = res_UB$SE,
                             ATT_UB = res_LB$ATT, SE_UB = res_LB$SE, Gamma = Gamma)
     }

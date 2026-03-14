@@ -79,23 +79,21 @@ rowsums_grid_cpp <- function(OR, Cond, Y_grid) {
     .Call(`_UDID_rowsums_grid_cpp`, OR, Cond, Y_grid)
 }
 
-#' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
+#' Sensitivity bounds with numerical root finding for the cutting point m(x)
 #'
-#' For each row i and column j applies the sensitivity scale factor
-#'   scale[i,j] = exp(+log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
-#'              = exp(-log_Gamma)   otherwise
-#' directly during accumulation, avoiding construction of the scale and
-#' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
+#' Solves for m^{UB}(x) or m^{LB}(x) = E_alpha(y_1 | m) / E_alpha(m) using a fast bisection
+#' method, since the function R(m) is monotonically decreasing. 
+#' For the UB case, we maximize by shifting weight to the right (Gamma^1 if y > m).
+#' For the LB case, we minimize by shifting weight to the left (Gamma^1 if y <= m).
 #'
 #' @param OR_grid       (N x M) base odds-ratio grid (alpha_0)
-#' @param Cond          (N x M) conditional density grid
+#' @param Cond          (N x M) conditional density grid (scaled by dY)
 #' @param Y_grid        (M)     outcome grid values
-#' @param mu_vec        (N)     per-observation baseline counterfactual mean
 #' @param log_Gamma     scalar = log(Gamma)
-#' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
-#' @return List with E_alpha (N) and E_Yalpha (N)
-sens_rowsums_cpp <- function(OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB) {
-    .Call(`_UDID_sens_rowsums_cpp`, OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB)
+#' @param is_UB         bool    TRUE for upper-bound (alpha_1^UB), FALSE for lower-bound (alpha_1^LB)
+#' @return List with E_alpha (N), E_Yalpha (N), and m_root (N)
+sens_rowsums_mroot_cpp <- function(OR_grid, Cond, Y_grid, log_Gamma, is_UB) {
+    .Call(`_UDID_sens_rowsums_mroot_cpp`, OR_grid, Cond, Y_grid, log_Gamma, is_UB)
 }
 
 #' Multiplier bootstrap SD (memory-efficient, uses R RNG)

@@ -80,38 +80,41 @@
 #'   \alpha_1(y,x) \in
 #'   \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
 #' }
-#' When the outcome is \strong{continuous}, we implement the following two-step
-#' approach in order to maximize the deviation.
+#' When the outcome is \strong{continuous}, we implement the following algorithm 
+#' in order to compute the maximum and minimum deviations.
 #' \itemize{
-#'   \item For each \eqn{X}, obtain
-#'   \eqn{y_c(X) := E[Y_1^{(0)} \mid A=1, X]}, which equals
-#'   \deqn{
-#'     y_c(X) = 
-#'     \frac{\displaystyle{  E[ Y_0\,\alpha_0(Y_0,X)  \mid A=1,X] } }{\displaystyle{ E[\alpha_0(Y_0,X) \mid A=1,X]} } 
-#'   }
-#'   under the OREC assumption.
-#'   \item Then, \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
+#'   \item For each \eqn{X}, define \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
 #'   and \eqn{\alpha_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
 #'   \deqn{
 #'     \Gamma^{UB}(y) =
 #'     \left\{
 #'     \begin{array}{ll}
-#'       \Gamma^{-1} & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
-#'       \Gamma      & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma^{-1} & \text{if } y <    m^{UB}(X) \text{ and } y \neq y_R \\
+#'       \Gamma      & \text{if } y \geq m^{UB}(X) \text{ and } y \neq y_R \\
 #'       1           & \text{if } y = y_R 
 #'     \end{array}
 #'     \right.
-#'     \,, \quad
+#'     }
+#'     \deqn{
 #'     \Gamma^{LB}(y) =
 #'     \left\{
 #'     \begin{array}{ll}
-#'       \Gamma      & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
-#'       \Gamma^{-1} & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma      & \text{if } y <    m^{LB}(X) \text{ and } y \neq y_R \\
+#'       \Gamma^{-1} & \text{if } y \geq m^{LB}(X) \text{ and } y \neq y_R \\
 #'       1           & \text{if } y = y_R 
 #'     \end{array}
 #'     \right.
 #'   }
 #'   \eqn{\Gamma^{UB}(y_R)=\Gamma^{LB}(y_R)=1} encodes the boundary condition of the odds ratio: \eqn{\alpha(y_R,X)=1}.
+#'   \item The cutoff values \eqn{m^{UB}(X)} and \eqn{m^{LB}(X)} are the roots for the equations:
+#'   \deqn{
+#'     m^{UB}(X) = 
+#'     \frac{\displaystyle{  E[ Y_1\,\alpha_1^{UB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} } 
+#'   }
+#'   \deqn{
+#'     m^{LB}(X) = 
+#'     \frac{\displaystyle{  E[ Y_1\,\alpha_1^{LB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
+#'   } 
 #'   }
 #'
 #' When the outcome is \strong{binary}, the reference value is fixed to
@@ -124,7 +127,8 @@
 #'     \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
 #'   \end{array}
 #'   \right.
-#'   \,, \quad
+#'   }
+#'   \deqn{
 #'   \alpha_1^{LB}(y,X) =
 #'   \left\{
 #'   \begin{array}{ll}
@@ -592,20 +596,20 @@ UDID_Nonparametric <- function(Y0,
         hat.OR0.alpha1 <- hat.OR0.alpha0
 
       } else {
-        ## C++: scale + rowSums fused — saves OR.Grid.alpha1, scale_grid,
-        ##      mu_base_grid and two rowSums products (5 temp N x 501 mats)
-        rs         <- sens_rowsums_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
-                                       mu_base_vec, log(Gamma), direction == "UB")
+        ## C++: root-finding + rowSums fused
+        rs         <- sens_rowsums_mroot_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
+                                       log(Gamma), direction == "UB")
         E_alpha1   <- rs$E_alpha
         E_Y1alpha1 <- rs$E_Yalpha
+        m_root     <- rs$m_root
         g_up   <- Gamma ^ 1
         g_down <- Gamma ^ (-1)
         if (direction == "UB") {
-          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_up, g_down)
-          hat.OR1        <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_up, g_down)
+          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > m_root, g_up, g_down)
+          hat.OR1        <- hat.OR1.alpha0 * ifelse(Y1.Eval > m_root, g_up, g_down)
         } else {
-          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_down, g_up)
-          hat.OR1        <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_down, g_up)
+          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > m_root, g_down, g_up)
+          hat.OR1        <- hat.OR1.alpha0 * ifelse(Y1.Eval > m_root, g_down, g_up)
         }
       }
 

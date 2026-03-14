@@ -352,18 +352,19 @@ UDID_Nonparametric_NoX <- function(Y0,
 
       } else {
         ## C++: scale + rowSums fused — saves 5 temp N x 501 matrices
-        rs         <- sens_rowsums_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
-                                       mu_base_vec, log(Gamma), direction == "UB")
+        rs         <- sens_rowsums_mroot_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
+                                       log(Gamma), direction == "UB")
         E_alpha1   <- rs$E_alpha
         E_Y1alpha1 <- rs$E_Yalpha
+        m_root     <- rs$m_root
         g_up   <- Gamma ^ 1
         g_down <- Gamma ^ (-1)
         if (direction == "UB") {
-          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_up, g_down)
-          hat.OR1.alpha1 <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_up, g_down)
+          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > m_root, g_up, g_down)
+          hat.OR1.alpha1 <- hat.OR1.alpha0 * ifelse(Y1.Eval > m_root, g_up, g_down)
         } else {
-          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_down, g_up)
-          hat.OR1.alpha1 <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_down, g_up)
+          hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > m_root, g_down, g_up)
+          hat.OR1.alpha1 <- hat.OR1.alpha0 * ifelse(Y1.Eval > m_root, g_down, g_up)
         }
       }
 

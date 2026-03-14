@@ -155,38 +155,41 @@ we allow
   \alpha_1(y,x) \in
   \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
 }
-When the outcome is \strong{continuous}, we implement the following two-step
-approach in order to maximize the deviation.
+When the outcome is \strong{continuous}, we implement the following algorithm 
+in order to compute the maximum and minimum deviations.
 \itemize{
-  \item For each \eqn{X}, obtain
-  \eqn{y_c(X) := E[Y_1^{(0)} \mid A=1, X]}, which equals
-  \deqn{
-    y_c(X) = 
-    \frac{\displaystyle{  E[ Y_0\,\alpha_0(Y_0,X)  \mid A=1,X] } }{\displaystyle{ E[\alpha_0(Y_0,X) \mid A=1,X]} } 
-  }
-  under the OREC assumption.
-  \item Then, \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
+  \item For each \eqn{X}, define \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
   and \eqn{\alpha_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
   \deqn{
     \Gamma^{UB}(y) =
     \left\{
     \begin{array}{ll}
-      \Gamma^{-1} & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
-      \Gamma      & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+      \Gamma^{-1} & \text{if } y <    m^{UB}(X) \text{ and } y \neq y_R \\
+      \Gamma      & \text{if } y \geq m^{UB}(X) \text{ and } y \neq y_R \\
       1           & \text{if } y = y_R 
     \end{array}
     \right.
-    \,, \quad
+    }
+    \deqn{
     \Gamma^{LB}(y) =
     \left\{
     \begin{array}{ll}
-      \Gamma      & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
-      \Gamma^{-1} & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+      \Gamma      & \text{if } y <    m^{LB}(X) \text{ and } y \neq y_R \\
+      \Gamma^{-1} & \text{if } y \geq m^{LB}(X) \text{ and } y \neq y_R \\
       1           & \text{if } y = y_R 
     \end{array}
     \right.
   }
   \eqn{\Gamma^{UB}(y_R)=\Gamma^{LB}(y_R)=1} encodes the boundary condition of the odds ratio: \eqn{\alpha(y_R,X)=1}.
+  \item The cutoff values \eqn{m^{UB}(X)} and \eqn{m^{LB}(X)} are the roots for the equations:
+  \deqn{
+    m^{UB}(X) = 
+    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{UB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} } 
+  }
+  \deqn{
+    m^{LB}(X) = 
+    \frac{\displaystyle{  E[ Y_1\,\alpha_1^{LB}(Y_1,X)  \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
+  } 
   }
 
 When the outcome is \strong{binary}, the reference value is fixed to
@@ -199,7 +202,8 @@ When the outcome is \strong{binary}, the reference value is fixed to
     \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
   \end{array}
   \right.
-  \,, \quad
+  }
+  \deqn{
   \alpha_1^{LB}(y,X) =
   \left\{
   \begin{array}{ll}

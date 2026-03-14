@@ -475,71 +475,95 @@ Rcpp::List rowsums_grid_cpp(const arma::mat& OR,
 }
 
 
-//' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
+//' Sensitivity bounds with numerical root finding for the cutting point m(x)
 //'
-//' For each row i and column j applies the sensitivity scale factor
-//'   scale[i,j] = exp(+log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
-//'              = exp(-log_Gamma)   otherwise
-//' directly during accumulation, avoiding construction of the scale and
-//' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
+//' Solves for m^{UB}(x) or m^{LB}(x) = E_alpha(y_1 | m) / E_alpha(m) using a fast bisection
+//' method, since the function R(m) is monotonically decreasing. 
+//' For the UB case, we maximize by shifting weight to the right (Gamma^1 if y > m).
+//' For the LB case, we minimize by shifting weight to the left (Gamma^1 if y <= m).
 //'
 //' @param OR_grid       (N x M) base odds-ratio grid (alpha_0)
-//' @param Cond          (N x M) conditional density grid
+//' @param Cond          (N x M) conditional density grid (scaled by dY)
 //' @param Y_grid        (M)     outcome grid values
-//' @param mu_vec        (N)     per-observation baseline counterfactual mean
 //' @param log_Gamma     scalar = log(Gamma)
-//' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
-//' @return List with E_alpha (N) and E_Yalpha (N)
+//' @param is_UB         bool    TRUE for upper-bound (alpha_1^UB), FALSE for lower-bound (alpha_1^LB)
+//' @return List with E_alpha (N), E_Yalpha (N), and m_root (N)
 // [[Rcpp::export]]
-Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid,
-                             const arma::mat& Cond,
-                             const arma::vec& Y_grid,
-                             const arma::vec& mu_vec,
-                             double           log_Gamma,
-                             bool             is_UB)
+Rcpp::List sens_rowsums_mroot_cpp(const arma::mat& OR_grid,
+                                   const arma::mat& Cond,
+                                   const arma::vec& Y_grid,
+                                   double           log_Gamma,
+                                   bool             is_UB)
 {
   const int    N      = (int)OR_grid.n_rows;
   const int    M      = (int)OR_grid.n_cols;
   const double g_up   = std::exp( log_Gamma);
   const double g_down = std::exp(-log_Gamma);
-  arma::vec E_alpha(N), E_Yalpha(N);
+  
+  arma::vec E_alpha(N), E_Yalpha(N), m_root(N);
 
-  // Branch outside the parallel loop so the condition is not re-evaluated N times
-  if (is_UB) {
 #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
+  #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < N; i++) {
-      const double mu_i = mu_vec[i];
-      double ea = 0.0, eya = 0.0;
-      for (int j = 0; j < M; j++) {
-        double scale = (Y_grid[j] > mu_i) ? g_up : g_down;
-        double v     = OR_grid(i, j) * Cond(i, j) * scale;
-        ea  += v;
-        eya += Y_grid[j] * v;
+  for (int i = 0; i < N; i++) {
+    
+    // Bounds for bisection: Y_grid[0] and Y_grid[M-1]
+    double m_lo = Y_grid[0];
+    double m_hi = Y_grid[M - 1];
+    double m_mid = 0.0;
+    
+    // Evaluate a candidate m
+    auto eval_m = [&](double m_cand, double &ea, double &eya) {
+      ea = 0.0;
+      eya = 0.0;
+      if (is_UB) {
+        // Upper bound: alpha_1^max(y,x) = Gamma^{-1} * alpha_0(y,x) if y <= m^{UB}(x)
+        for (int j = 0; j < M; j++) {
+          double scale = (Y_grid[j] > m_cand) ? g_up : g_down;
+          double v     = OR_grid(i, j) * Cond(i, j) * scale;
+          ea  += v;
+          eya += Y_grid[j] * v;
+        }
+      } else {
+        // Lower bound: alpha_1^min(y,x) = Gamma^{-1} * alpha_0(y,x) if y > m^{LB}(x)
+        // (which means Gamma^1 if y <= m^{LB}(x))
+        for (int j = 0; j < M; j++) {
+          double scale = (Y_grid[j] > m_cand) ? g_down : g_up;
+          double v     = OR_grid(i, j) * Cond(i, j) * scale;
+          ea  += v;
+          eya += Y_grid[j] * v;
+        }
       }
-      E_alpha[i]  = ea;
-      E_Yalpha[i] = eya;
-    }
-  } else {
-#ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < N; i++) {
-      const double mu_i = mu_vec[i];
-      double ea = 0.0, eya = 0.0;
-      for (int j = 0; j < M; j++) {
-        double scale = (Y_grid[j] > mu_i) ? g_down : g_up;
-        double v     = OR_grid(i, j) * Cond(i, j) * scale;
-        ea  += v;
-        eya += Y_grid[j] * v;
+    };
+    
+    double ea_out = 0.0, eya_out = 0.0;
+    
+    // Bisection max 40 iterations (accurate to ~10^-12)
+    for (int iter = 0; iter < 40; iter++) {
+      m_mid = 0.5 * (m_lo + m_hi);
+      
+      eval_m(m_mid, ea_out, eya_out);
+      double R_mid = eya_out - m_mid * ea_out;
+      
+      if (R_mid > 0.0) {
+        m_lo = m_mid; // R(m) is monotonically decreasing, so root is > m_mid
+      } else {
+        m_hi = m_mid;
       }
-      E_alpha[i]  = ea;
-      E_Yalpha[i] = eya;
+      if ((m_hi - m_lo) < 1e-7) break;
     }
+    
+    // Evaluate one final time at the converged m_mid to ensure outputs are synced
+    eval_m(m_mid, ea_out, eya_out);
+    
+    E_alpha[i]  = ea_out;
+    E_Yalpha[i] = eya_out;
+    m_root[i]   = m_mid;
   }
+  
   return Rcpp::List::create(Rcpp::Named("E_alpha")  = E_alpha,
-                             Rcpp::Named("E_Yalpha") = E_Yalpha);
+                             Rcpp::Named("E_Yalpha") = E_Yalpha,
+                             Rcpp::Named("m_root")   = m_root);
 }
 
 
