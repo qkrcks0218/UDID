@@ -45,8 +45,8 @@
 #' \eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
 #' \deqn{
 #'   \alpha_t(y,x) =
-#'   \frac{f(Y_t^{(0)}=y \mid A=1, X=x)}{f(Y_t^{(0)}=y_R \mid A=1, X=x)}
-#'   \frac{f(Y_t^{(0)}=y_R \mid A=0, X=x)}{f(Y_t^{(0)}=y \mid A=0, X=x)}
+#'   \frac{ \displaystyle{   f(Y_t^{(0)}=y \mid A=1, X=x)} } { \displaystyle{   f(Y_t^{(0)}=y_R \mid A=1, X=x)} }
+#'   \frac{ \displaystyle{  f(Y_t^{(0)}=y_R \mid A=0, X=x)} } { \displaystyle{  f(Y_t^{(0)}=y \mid A=0, X=x)} }
 #' }
 #' and \eqn{y_R} is a reference value. Note that \eqn{\alpha_t(y_R,X)=1}.
 #'
@@ -86,39 +86,33 @@
 #'   \item For each \eqn{X}, obtain
 #'   \eqn{y_c(X) := E[Y_1^{(0)} \mid A=1, X]}, which equals
 #'   \deqn{
-#'     y_c(X) = \frac{E[Y_0\,\alpha_0(Y_0,X) \mid A=1,X]}{E[\alpha_0(Y_0,X) \mid A=1,X]}
+#'     y_c(X) = 
+#'     \frac{\displaystyle{  E[ Y_0\,\alpha_0(Y_0,X)  \mid A=1,X] } }{\displaystyle{ E[\alpha_0(Y_0,X) \mid A=1,X]} } 
 #'   }
 #'   under the OREC assumption.
-#'   \item Then, \eqn{\tilde{\alpha}_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
-#'   and \eqn{\tilde{\alpha}_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
+#'   \item Then, \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
+#'   and \eqn{\alpha_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
 #'   \deqn{
 #'     \Gamma^{UB}(y) =
 #'     \left\{
 #'     \begin{array}{ll}
-#'       \Gamma^{-1/2} & \text{if } y <    y_c(X) \\
-#'       \Gamma^{1/2}  & \text{if } y \geq y_c(X)
+#'       \Gamma^{-1} & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma      & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       1           & \text{if } y = y_R 
 #'     \end{array}
 #'     \right.
 #'     \,, \quad
 #'     \Gamma^{LB}(y) =
 #'     \left\{
 #'     \begin{array}{ll}
-#'       \Gamma^{1/2}  & \text{if } y <    y_c(X) \\
-#'       \Gamma^{-1/2} & \text{if } y \geq y_c(X)
+#'       \Gamma      & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma^{-1} & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       1           & \text{if } y = y_R 
 #'     \end{array}
 #'     \right.
 #'   }
-#'   To satisfy the boundary condition of the odds ratio, i.e.,
-#'   \eqn{\alpha_t(y_R, X) = 1}, \eqn{\tilde{\alpha}_1^{UB}} and
-#'   \eqn{\tilde{\alpha}_1^{LB}} are normalized as
-#'   \deqn{
-#'     \alpha_1^{UB}(y,X) =
-#'       \frac{\tilde{\alpha}_1^{UB}(y,X)}{\tilde{\alpha}_1^{UB}(y_R,X)},
-#'     \qquad
-#'     \alpha_1^{LB}(y,X) =
-#'       \frac{\tilde{\alpha}_1^{LB}(y,X)}{\tilde{\alpha}_1^{LB}(y_R,X)}.
+#'   \eqn{\Gamma^{UB}(y_R)=\Gamma^{LB}(y_R)=1} encodes the boundary condition of the odds ratio: \eqn{\alpha(y_R,X)=1}.
 #'   }
-#' }
 #'
 #' When the outcome is \strong{binary}, the reference value is fixed to
 #' \eqn{y_R = 0}. Therefore,
@@ -127,7 +121,7 @@
 #'   \left\{
 #'   \begin{array}{ll}
 #'     1                           & \text{if } y = 0 \\
-#'     \Gamma \cdot \alpha_0(1,X) & \text{if } y = 1
+#'     \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
 #'   \end{array}
 #'   \right.
 #'   \,, \quad
@@ -416,8 +410,9 @@ UDID_Nonparametric <- function(Y0,
 
   if (type == "continuous") {
 
+    y_R <- stats::median(Y0[A == 0])
     eval_y_vec <- c(Y0.Eval, Y1.Eval,
-                    rep(stats::median(Y0[A == 0]), N.Test),
+                    rep(y_R, N.Test),
                     rep(Y.Grid.Basis, each = N.Test))
     eval_x_mat <- X.Eval[rep(seq_len(N.Test), times = 3 + Num.Y.Grid.Basis), , drop = FALSE]
 
@@ -600,11 +595,11 @@ UDID_Nonparametric <- function(Y0,
         ## C++: scale + rowSums fused — saves OR.Grid.alpha1, scale_grid,
         ##      mu_base_grid and two rowSums products (5 temp N x 501 mats)
         rs         <- sens_rowsums_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
-                                       mu_base_vec, log(Gamma) / 2, direction == "UB")
+                                       mu_base_vec, log(Gamma), direction == "UB")
         E_alpha1   <- rs$E_alpha
         E_Y1alpha1 <- rs$E_Yalpha
-        g_up   <- Gamma ^ 0.5
-        g_down <- Gamma ^ (-0.5)
+        g_up   <- Gamma ^ 1
+        g_down <- Gamma ^ (-1)
         if (direction == "UB") {
           hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_up, g_down)
           hat.OR1        <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_up, g_down)
@@ -624,14 +619,14 @@ UDID_Nonparametric <- function(Y0,
       if (Gamma == 1) {
         hat.OR.x.alpha1.loc <- hat.OR.x.alpha0; alpha1_at_0 <- 1
       } else {
+        ## alpha_1(y_R=0, x) = 1 (no scaling at reference);
+        ## alpha_1(1, x) = alpha_0(1, x) * scale(1, mu, Gamma)
         if (direction == "UB") {
           s1 <- sens_scale_UB(rep(1, N.Test), mu_base_vec, Gamma)
-          s0 <- sens_scale_UB(rep(0, N.Test), mu_base_vec, Gamma)
         } else {
           s1 <- sens_scale_LB(rep(1, N.Test), mu_base_vec, Gamma)
-          s0 <- sens_scale_LB(rep(0, N.Test), mu_base_vec, Gamma)
         }
-        hat.OR.x.alpha1.loc <- hat.OR.x.alpha0 * s1; alpha1_at_0 <- 1 * s0
+        hat.OR.x.alpha1.loc <- hat.OR.x.alpha0 * s1; alpha1_at_0 <- 1
       }
       E_alpha1          <- Cond.Density * hat.OR.x.alpha1.loc + (1 - Cond.Density) * alpha1_at_0
       hat.OR1           <- ifelse(Y1.Eval == 1, hat.OR.x.alpha1.loc, alpha1_at_0)

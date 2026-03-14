@@ -37,11 +37,11 @@ EIF_Continuous <- function(Y1, Y0, A, OR, bA1, mu1, DR, efficient = TRUE) {
 ##  1. Compute mu(x) = E[Y1 | A=0, X=x] under Gamma=1 (baseline).
 ##  2. For Gamma > 1 define directional scales:
 ##
-##     scale_UB(y, x) = Gamma^{1/2}   if y >  mu(x)
-##                       Gamma^{-1/2}  if y <= mu(x)
+##     scale_UB(y, x) = Gamma        if y >  mu(x)
+##                       Gamma^{-1}   if y <= mu(x)
 ##
-##     scale_LB(y, x) = Gamma^{-1/2}  if y >  mu(x)
-##                       Gamma^{1/2}   if y <= mu(x)
+##     scale_LB(y, x) = Gamma^{-1}   if y >  mu(x)
+##                       Gamma        if y <= mu(x)
 ##
 ##  3. alpha_{1,UB} = alpha_0 * scale_UB
 ##     alpha_{1,LB} = alpha_0 * scale_LB
@@ -53,15 +53,15 @@ EIF_Continuous <- function(Y1, Y0, A, OR, bA1, mu1, DR, efficient = TRUE) {
 #' @keywords internal
 sens_scale_UB <- function(y, mu, Gamma) {
   ## y and mu must be conformable; returns same shape as y
-  g_up   <- Gamma^(0.5)
-  g_down <- Gamma^(-0.5)
+  g_up   <- Gamma^(1)
+  g_down <- Gamma^(-1)
   ifelse(y > mu, g_up, g_down)
 }
 
 #' @keywords internal
 sens_scale_LB <- function(y, mu, Gamma) {
-  g_up   <- Gamma^(0.5)
-  g_down <- Gamma^(-0.5)
+  g_up   <- Gamma^(1)
+  g_down <- Gamma^(-1)
   ifelse(y > mu, g_down, g_up)
 }
 

@@ -186,8 +186,9 @@ UDID_Nonparametric_NoX <- function(Y0,
   if (type == "continuous") {
 
     ## Evaluation y-vectors: (Y0.Eval, Y1.Eval, y_ref, Y.Grid.Basis)
+    y_R <- stats::median(Y0[A == 0])
     eval_y_vec <- c(Y0.Eval, Y1.Eval,
-                    rep(stats::median(Y0[A == 0]), N.Test),
+                    rep(y_R, N.Test),
                     rep(Y.Grid.Basis, each = N.Test))
 
     ## KDE of Y0 | A=0 (marginal, no X conditioning)
@@ -352,11 +353,11 @@ UDID_Nonparametric_NoX <- function(Y0,
       } else {
         ## C++: scale + rowSums fused — saves 5 temp N x 501 matrices
         rs         <- sens_rowsums_cpp(OR.Grid.alpha0, Cond.Density, Y.Grid.Basis,
-                                       mu_base_vec, log(Gamma) / 2, direction == "UB")
+                                       mu_base_vec, log(Gamma), direction == "UB")
         E_alpha1   <- rs$E_alpha
         E_Y1alpha1 <- rs$E_Yalpha
-        g_up   <- Gamma ^ 0.5
-        g_down <- Gamma ^ (-0.5)
+        g_up   <- Gamma ^ 1
+        g_down <- Gamma ^ (-1)
         if (direction == "UB") {
           hat.OR0.alpha1 <- hat.OR0.alpha0 * ifelse(Y0.Eval > mu_base_vec, g_up, g_down)
           hat.OR1.alpha1 <- hat.OR1.alpha0 * ifelse(Y1.Eval > mu_base_vec, g_up, g_down)
@@ -378,15 +379,15 @@ UDID_Nonparametric_NoX <- function(Y0,
         hat.OR.x.alpha1.loc <- hat.OR.x.alpha0
         alpha1_at_0         <- 1
       } else {
+        ## alpha_1(y_R=0, x) = 1 (no scaling at reference);
+        ## alpha_1(1, x) = alpha_0(1, x) * scale(1, mu, Gamma)
         if (direction == "UB") {
           s1 <- sens_scale_UB(rep(1, N.Test), mu_base_vec, Gamma)
-          s0 <- sens_scale_UB(rep(0, N.Test), mu_base_vec, Gamma)
         } else {
           s1 <- sens_scale_LB(rep(1, N.Test), mu_base_vec, Gamma)
-          s0 <- sens_scale_LB(rep(0, N.Test), mu_base_vec, Gamma)
         }
         hat.OR.x.alpha1.loc <- hat.OR.x.alpha0 * s1
-        alpha1_at_0         <- 1 * s0
+        alpha1_at_0         <- 1
       }
 
       E_alpha1          <- Cond.Density * hat.OR.x.alpha1.loc + (1 - Cond.Density) * alpha1_at_0

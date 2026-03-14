@@ -82,8 +82,8 @@ rowsums_grid_cpp <- function(OR, Cond, Y_grid) {
 #' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
 #'
 #' For each row i and column j applies the sensitivity scale factor
-#'   scale[i,j] = exp(+half_log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
-#'              = exp(-half_log_Gamma)   otherwise
+#'   scale[i,j] = exp(+log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
+#'              = exp(-log_Gamma)   otherwise
 #' directly during accumulation, avoiding construction of the scale and
 #' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
 #'
@@ -91,11 +91,11 @@ rowsums_grid_cpp <- function(OR, Cond, Y_grid) {
 #' @param Cond          (N x M) conditional density grid
 #' @param Y_grid        (M)     outcome grid values
 #' @param mu_vec        (N)     per-observation baseline counterfactual mean
-#' @param half_log_Gamma  scalar = log(Gamma) / 2
+#' @param log_Gamma     scalar = log(Gamma)
 #' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
 #' @return List with E_alpha (N) and E_Yalpha (N)
-sens_rowsums_cpp <- function(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB) {
-    .Call(`_UDID_sens_rowsums_cpp`, OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB)
+sens_rowsums_cpp <- function(OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB) {
+    .Call(`_UDID_sens_rowsums_cpp`, OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB)
 }
 
 #' Multiplier bootstrap SD (memory-efficient, uses R RNG)

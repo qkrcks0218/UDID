@@ -4,7 +4,7 @@
 \alias{sens_rowsums_cpp}
 \title{Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)}
 \usage{
-sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB)
+sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB)
 }
 \arguments{
 \item{OR_grid}{(N x M) base odds-ratio grid (alpha_0)}
@@ -15,7 +15,7 @@ sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB)
 
 \item{mu_vec}{(N)     per-observation baseline counterfactual mean}
 
-\item{half_log_Gamma}{scalar = log(Gamma) / 2}
+\item{log_Gamma}{scalar = log(Gamma)}
 
 \item{is_UB}{bool    TRUE for upper-bound, FALSE for lower-bound}
 }
@@ -24,8 +24,8 @@ List with E_alpha (N) and E_Yalpha (N)
 }
 \description{
 For each row i and column j applies the sensitivity scale factor
-  scale[i,j] = exp(+half_log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
-             = exp(-half_log_Gamma)   otherwise
+  scale[i,j] = exp(+log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
+             = exp(-log_Gamma)   otherwise
 directly during accumulation, avoiding construction of the scale and
 scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
 }

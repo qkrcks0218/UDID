@@ -478,8 +478,8 @@ Rcpp::List rowsums_grid_cpp(const arma::mat& OR,
 //' Sensitivity-scaled rowSums in one pass (no temporary N x M matrices)
 //'
 //' For each row i and column j applies the sensitivity scale factor
-//'   scale[i,j] = exp(+half_log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
-//'              = exp(-half_log_Gamma)   otherwise
+//'   scale[i,j] = exp(+log_Gamma)  if Y_grid[j] > mu[i]  (UB direction)
+//'              = exp(-log_Gamma)   otherwise
 //' directly during accumulation, avoiding construction of the scale and
 //' scaled-OR matrices (saves 3-5 temporary N x M allocations per call).
 //'
@@ -487,7 +487,7 @@ Rcpp::List rowsums_grid_cpp(const arma::mat& OR,
 //' @param Cond          (N x M) conditional density grid
 //' @param Y_grid        (M)     outcome grid values
 //' @param mu_vec        (N)     per-observation baseline counterfactual mean
-//' @param half_log_Gamma  scalar = log(Gamma) / 2
+//' @param log_Gamma     scalar = log(Gamma)
 //' @param is_UB         bool    TRUE for upper-bound, FALSE for lower-bound
 //' @return List with E_alpha (N) and E_Yalpha (N)
 // [[Rcpp::export]]
@@ -495,13 +495,13 @@ Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid,
                              const arma::mat& Cond,
                              const arma::vec& Y_grid,
                              const arma::vec& mu_vec,
-                             double           half_log_Gamma,
+                             double           log_Gamma,
                              bool             is_UB)
 {
   const int    N      = (int)OR_grid.n_rows;
   const int    M      = (int)OR_grid.n_cols;
-  const double g_up   = std::exp( half_log_Gamma);
-  const double g_down = std::exp(-half_log_Gamma);
+  const double g_up   = std::exp( log_Gamma);
+  const double g_down = std::exp(-log_Gamma);
   arma::vec E_alpha(N), E_Yalpha(N);
 
   // Branch outside the parallel loop so the condition is not re-evaluated N times

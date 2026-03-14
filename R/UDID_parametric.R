@@ -24,8 +24,8 @@
 #' \eqn{\alpha_1(y,x) = \alpha_0(y,x)}, where
 #' \deqn{
 #'   \alpha_t(y,x) =
-#'   \frac{f(Y_t^{(0)}=y \mid A=1, X=x)}{f(Y_t^{(0)}=y_R \mid A=1, X=x)}
-#'   \frac{f(Y_t^{(0)}=y_R \mid A=0, X=x)}{f(Y_t^{(0)}=y \mid A=0, X=x)}
+#'   \frac{ \displaystyle{   f(Y_t^{(0)}=y \mid A=1, X=x)} } { \displaystyle{   f(Y_t^{(0)}=y_R \mid A=1, X=x)} }
+#'   \frac{ \displaystyle{  f(Y_t^{(0)}=y_R \mid A=0, X=x)} } { \displaystyle{  f(Y_t^{(0)}=y \mid A=0, X=x)} }
 #' }
 #' and \eqn{y_R} is a reference value. Note that \eqn{\alpha_t(y_R,X)=1}.
 #'
@@ -58,8 +58,62 @@
 #'   \alpha_1(y,x) \in
 #'   \left[\Gamma^{-1} \cdot \alpha_0(y,x),\; \Gamma \cdot \alpha_0(y,x)\right].
 #' }
-#' The sensitivity bounds are computed using the same two-step approach
-#' described in \code{\link{UDID_Nonparametric}}.
+#' When the outcome is \strong{continuous}, we implement the following two-step
+#' approach in order to maximize the deviation.
+#' \itemize{
+#'   \item For each \eqn{X}, obtain
+#'   \eqn{y_c(X) := E[Y_1^{(0)} \mid A=1, X]}, which equals
+#'   \deqn{
+#'     y_c(X) = 
+#'     \frac{\displaystyle{  E[ Y_0\,\alpha_0(Y_0,X)  \mid A=1,X] } }{\displaystyle{ E[\alpha_0(Y_0,X) \mid A=1,X]} } 
+#'   }
+#'   under the OREC assumption.
+#'   \item Then, \eqn{\alpha_1^{UB}(y,X) := \Gamma^{UB}(y)\,\alpha_0(y,X)}
+#'   and \eqn{\alpha_1^{LB}(y,X) := \Gamma^{LB}(y)\,\alpha_0(y,X)}, where
+#'   \deqn{
+#'     \Gamma^{UB}(y) =
+#'     \left\{
+#'     \begin{array}{ll}
+#'       \Gamma^{-1} & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma      & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       1           & \text{if } y = y_R 
+#'     \end{array}
+#'     \right.
+#'     \,, \quad
+#'     \Gamma^{LB}(y) =
+#'     \left\{
+#'     \begin{array}{ll}
+#'       \Gamma      & \text{if } y <    y_c(X) \text{ and } y \neq y_R \\
+#'       \Gamma^{-1} & \text{if } y \geq y_c(X) \text{ and } y \neq y_R \\
+#'       1           & \text{if } y = y_R 
+#'     \end{array}
+#'     \right.
+#'   }
+#'   \eqn{\Gamma^{UB}(y_R)=\Gamma^{LB}(y_R)=1} encodes the boundary condition of the odds ratio: \eqn{\alpha(y_R,X)=1}.
+#'   }
+#'
+#' When the outcome is \strong{binary}, the reference value is fixed to
+#' \eqn{y_R = 0}. Therefore,
+#' \deqn{
+#'   \alpha_1^{UB}(y,X) =
+#'   \left\{
+#'   \begin{array}{ll}
+#'     1                           & \text{if } y = 0 \\
+#'     \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
+#'   \end{array}
+#'   \right.
+#'   \,, \quad
+#'   \alpha_1^{LB}(y,X) =
+#'   \left\{
+#'   \begin{array}{ll}
+#'     1                               & \text{if } y = 0 \\
+#'     \Gamma^{-1} \cdot \alpha_0(1,X) & \text{if } y = 1
+#'   \end{array}
+#'   \right.
+#' }
+#'
+#' Based on \eqn{\alpha_1^{UB}(y,X)} and \eqn{\alpha_1^{LB}(y,X)}, we obtain
+#' the upper and lower bounds on the ATT and their standard errors.
 #'
 #' @return A named list with the following components:
 #'   \describe{
@@ -294,10 +348,10 @@ UDID_Parametric <- function(Y0,
         alpha1_Y1   <- alpha0_Y1  * scale_Y1
       }
       alpha1_grid[, !valid_grid] <- 0
-      
+
       E_alpha1   <- rowSums(alpha1_grid * wt_mat)
       E_Y1alpha1 <- rowSums(Y1_grid_mat * alpha1_grid * wt_mat)
-      
+
       hat.OR1           <- alpha1_Y1
       hat.BetaA1.plugin <- safe_ratio(odds_X, E_alpha1)
       hat.Mu1.plugin    <- safe_ratio(E_Y1alpha1, E_alpha1)
@@ -311,17 +365,15 @@ UDID_Parametric <- function(Y0,
         hat.OR.x.alpha1 <- hat.OR.x.alpha0
         alpha1_at_0     <- 1
       } else {
-        ## alpha_0(1,x) = hat.OR.x.alpha0; alpha_0(0,x) = 1
-        ## scale at y=1:
+        ## alpha_1(y_R=0, x) = 1 (no scaling at reference);
+        ## alpha_1(1, x) = alpha_0(1, x) * scale(1, mu, Gamma)
         if (direction == "UB") {
           s1 <- sens_scale_UB(rep(1, N), mu_base_vec, Gamma)
-          s0 <- sens_scale_UB(rep(0, N), mu_base_vec, Gamma)
         } else {
           s1 <- sens_scale_LB(rep(1, N), mu_base_vec, Gamma)
-          s0 <- sens_scale_LB(rep(0, N), mu_base_vec, Gamma)
         }
         hat.OR.x.alpha1 <- hat.OR.x.alpha0 * s1
-        alpha1_at_0     <- 1 * s0  ## alpha_0(0,x)=1 scaled
+        alpha1_at_0     <- 1
       }
       
       E_alpha1   <- p_Y1_1_A0 * hat.OR.x.alpha1 + p_Y1_0_A0 * alpha1_at_0
@@ -349,6 +401,10 @@ UDID_Parametric <- function(Y0,
           scale_Y0   <- sens_scale_LB(Y0, mu_base_vec, Gamma)
           scale_Y1   <- sens_scale_LB(Y1, mu_base_vec, Gamma)
         }
+        ## alpha_1(y_R, x) = 1: no scaling at y = y_ref
+        scale_grid[y_mat == y_ref] <- 1
+        scale_Y0[Y0 == y_ref] <- 1
+        scale_Y1[Y1 == y_ref] <- 1
         alpha1_grid <- alpha0_grid * scale_grid
         alpha1_Y0   <- alpha0_Y0  * scale_Y0
         alpha1_Y1   <- alpha0_Y1  * scale_Y1

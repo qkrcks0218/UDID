@@ -164,10 +164,10 @@ UDID_Parametric_NoX <- function(Y0,
         alpha1_Y1   <- alpha0_Y1  * scale_Y1
       }
       alpha1_grid[, !valid_grid] <- 0
-      
+
       E_alpha1   <- rowSums(alpha1_grid * wt_mat)
       E_Y1alpha1 <- rowSums(Y1_grid_mat * alpha1_grid * wt_mat)
-      
+
       hat.OR1           <- alpha1_Y1
       hat.BetaA1.plugin <- safe_ratio(odds_X, E_alpha1)
       hat.Mu1.plugin    <- safe_ratio(E_Y1alpha1, E_alpha1)
@@ -179,15 +179,15 @@ UDID_Parametric_NoX <- function(Y0,
         hat.OR.x.alpha1.loc <- hat.OR.x.alpha0
         alpha1_at_0         <- 1
       } else {
+        ## alpha_1(y_R=0, x) = 1 (no scaling at reference);
+        ## alpha_1(1, x) = alpha_0(1, x) * scale(1, mu, Gamma)
         if (direction == "UB") {
           s1 <- sens_scale_UB(rep(1, N), mu_base_vec, Gamma)
-          s0 <- sens_scale_UB(rep(0, N), mu_base_vec, Gamma)
         } else {
           s1 <- sens_scale_LB(rep(1, N), mu_base_vec, Gamma)
-          s0 <- sens_scale_LB(rep(0, N), mu_base_vec, Gamma)
         }
         hat.OR.x.alpha1.loc <- hat.OR.x.alpha0 * s1
-        alpha1_at_0         <- 1 * s0
+        alpha1_at_0         <- 1
       }
       
       E_alpha1   <- p_Y1_1_A0 * hat.OR.x.alpha1.loc + p_Y1_0_A0 * alpha1_at_0
@@ -215,6 +215,10 @@ UDID_Parametric_NoX <- function(Y0,
           scale_Y0   <- sens_scale_LB(Y0, mu_base_vec, Gamma)
           scale_Y1   <- sens_scale_LB(Y1, mu_base_vec, Gamma)
         }
+        ## alpha_1(y_R, x) = 1: no scaling at y = y_ref
+        scale_grid[y_mat == y_ref] <- 1
+        scale_Y0[Y0 == y_ref] <- 1
+        scale_Y1[Y1 == y_ref] <- 1
         alpha1_grid <- alpha0_grid * scale_grid
         alpha1_Y0   <- alpha0_Y0  * scale_Y0
         alpha1_Y1   <- alpha0_Y1  * scale_Y1

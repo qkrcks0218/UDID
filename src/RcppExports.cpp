@@ -86,8 +86,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sens_rowsums_cpp
-Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid, const arma::mat& Cond, const arma::vec& Y_grid, const arma::vec& mu_vec, double half_log_Gamma, bool is_UB);
-RcppExport SEXP _UDID_sens_rowsums_cpp(SEXP OR_gridSEXP, SEXP CondSEXP, SEXP Y_gridSEXP, SEXP mu_vecSEXP, SEXP half_log_GammaSEXP, SEXP is_UBSEXP) {
+Rcpp::List sens_rowsums_cpp(const arma::mat& OR_grid, const arma::mat& Cond, const arma::vec& Y_grid, const arma::vec& mu_vec, double log_Gamma, bool is_UB);
+RcppExport SEXP _UDID_sens_rowsums_cpp(SEXP OR_gridSEXP, SEXP CondSEXP, SEXP Y_gridSEXP, SEXP mu_vecSEXP, SEXP log_GammaSEXP, SEXP is_UBSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -95,9 +95,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type Cond(CondSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type Y_grid(Y_gridSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type mu_vec(mu_vecSEXP);
-    Rcpp::traits::input_parameter< double >::type half_log_Gamma(half_log_GammaSEXP);
+    Rcpp::traits::input_parameter< double >::type log_Gamma(log_GammaSEXP);
     Rcpp::traits::input_parameter< bool >::type is_UB(is_UBSEXP);
-    rcpp_result_gen = Rcpp::wrap(sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, half_log_Gamma, is_UB));
+    rcpp_result_gen = Rcpp::wrap(sens_rowsums_cpp(OR_grid, Cond, Y_grid, mu_vec, log_Gamma, is_UB));
     return rcpp_result_gen;
 END_RCPP
 }
