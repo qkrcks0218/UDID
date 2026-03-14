@@ -100,8 +100,7 @@ UDID_Parametric_SensPara <- function(Yn1,
     OR.Y0.alphan1  <- rn1[,1] / rn1[,3]
     OR.Yn1.alphan1 <- rn1[,2] / rn1[,3]
     
-    range_alpha <- c( OR.Y0.alpha0[idx1]  / OR.Y0.alphan1[idx1],
-                      OR.Yn1.alpha0[idx1] / OR.Yn1.alphan1[idx1] )
+    range_alpha <- c( OR.Y0.alpha0[idx1]  / OR.Y0.alphan1[idx1] )
     
     return( stats::quantile(range_alpha, quantile.range) )
     
@@ -334,8 +333,7 @@ UDID_Nonparametric_SensPara <- function(Yn1,
     OR.Y0.alphan1 <- (rn1[,1] / rn1[,3])
     OR.Yn1.alphan1 <- (rn1[,2] / rn1[,3])
     
-    range_alpha <- c( OR.Y0.alpha0[idx1] / OR.Y0.alphan1[idx1],
-                      OR.Yn1.alpha0[idx1] / OR.Yn1.alphan1[idx1] )
+    range_alpha <- c( OR.Y0.alpha0[idx1] / OR.Y0.alphan1[idx1] )
     
     return( stats::quantile(range_alpha, quantile.range) )
     
@@ -441,8 +439,7 @@ UDID_Parametric_NoX_SensPara <- function(Yn1,
     OR.Y0.alphan1  <- rn1[,1] / rn1[,3]
     OR.Yn1.alphan1 <- rn1[,2] / rn1[,3]
     
-    range_alpha <- c( OR.Y0.alpha0[idx1]  / OR.Y0.alphan1[idx1],
-                      OR.Yn1.alpha0[idx1] / OR.Yn1.alphan1[idx1] )
+    range_alpha <- c( OR.Y0.alpha0[idx1]  / OR.Y0.alphan1[idx1] )
     
     return(stats::quantile(range_alpha, quantile.range))
     
@@ -558,8 +555,7 @@ UDID_Nonparametric_NoX_SensPara <- function(Yn1,
     OR.Y0.alphan1 <- (rn1[,1] / rn1[,3])
     OR.Yn1.alphan1 <- (rn1[,2] / rn1[,3])
     
-    range_alpha <- c( OR.Y0.alpha0[idx1] / OR.Y0.alphan1[idx1],
-                      OR.Yn1.alpha0[idx1] / OR.Yn1.alphan1[idx1] )
+    range_alpha <- c( OR.Y0.alpha0[idx1] / OR.Y0.alphan1[idx1] )
     
     return( stats::quantile(range_alpha, quantile.range) )
     
