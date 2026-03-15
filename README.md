@@ -180,8 +180,8 @@ UDID.SensPara <- UDID_Nonparametric_SensPara(Data$Yn1,Data$Y0,Data$A,Data[,X.pos
                                              quantile.range=c(0.01,0.025,0.975,0.99))
 log(UDID.SensPara)
 
-#           1%       2.5%      97.5%        99%
-#   -0.4193990 -0.4040136  0.5059941  0.6195689
+#         1%       2.5%      97.5%        99% 
+# -0.4211098 -0.3998295  0.4092278  0.5748887 
 
 ###########################################
 # UDID Sensitivity Analysis
