@@ -82,11 +82,7 @@ Given the estimated nuisance functions, $\hat{\alpha}_1$, $\hat{\beta}_1$, $\hat
 
  For sensitivity analysis, given the sensitivity parameter $\Gamma \geq 1$,
  we allow
- $$ \frac{ 
-  \displaystyle{\alpha_1(y,x)}
-  }{
-  \displaystyle{\alpha_0(y,x)}
-  }
+ $$ \frac{ \alpha_1(y,x) }{ \alpha_0(y,x)} 
     \in
    \left[\Gamma^{-1} ,  \Gamma  \right].
    \qquad \qquad (1) $$
