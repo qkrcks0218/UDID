@@ -1,0 +1,34 @@
+Package: UDID
+Title: Universal Difference-in-Differences
+Version: 0.0.0
+Authors@R: person("Chan", "Park", role = c("aut","cre"),
+           email = "parkchan@illinois.com",
+           comment = "Park & Tchetgen Tchetgen, 2025")
+Description: Parametric and nonparametric universal difference-in-differences (UDID) estimation based on the efficient influence function, with tools for sensitivity analysis and visualization.
+License: GPL (>= 3)
+Depends: R (>= 3.5.0)
+Imports:
+    MASS,
+    np,
+    densratio,
+    did,
+    Rcpp,
+    RcppArmadillo,
+    SuperLearner,
+    caret,
+    nnet,
+    glmnet,
+    earth,
+    gam,
+    gbm,
+    xgboost,
+    kernlab,
+    polspline,
+    ranger,
+    stats,
+    graphics,
+    grDevices,
+    utils
+LinkingTo: Rcpp, RcppArmadillo
+Encoding: UTF-8
+RoxygenNote: 7.3.3
