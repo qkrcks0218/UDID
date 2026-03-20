@@ -113,11 +113,11 @@ For each $X$, define $\alpha_1^{LB}(y,X) := w^{max}(y,X) \cdot \alpha_0(y,X)$ an
 The cutoff values $m^{max}(X)$ and $m^{min}(X)$ are the roots for the equations:
 
   $$
-  m^{max}(X) = \frac{E[ Y_1\,\alpha_1^{LB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} 
+  m^{max}(X) = \frac{E[ Y_1 \alpha_1^{LB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} 
   $$
 
   $$
-  m^{min}(X) = \frac{E[ Y_1\,\alpha_1^{UB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]}  
+  m^{min}(X) = \frac{E[ Y_1\alpha_1^{UB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]}  
   $$
 
 When the outcome is **binary**, the reference value is fixed to $y_R = 0$. Therefore,
