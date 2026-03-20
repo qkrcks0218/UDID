@@ -92,24 +92,20 @@ When the outcome is **continuous**, we implement the following algorithm in orde
 
   ```math
   w^{max}(y,X) =
-  \left\{
-  \begin{array}{ll}
+  \begin{cases}
     \Gamma      & \text{if } y \geq m^{max}(X) \text{ and } y \neq y_R \\
     \Gamma^{-1} & \text{if } y < m^{max}(X) \text{ and } y \neq y_R \\
     1           & \text{if } y = y_R 
-  \end{array}
-  \right.
+  \end{cases}
   ```
 
   ```math
   w^{min}(y,X) =
-  \left\{
-  \begin{array}{ll}
+  \begin{cases}
     \Gamma^{-1} & \text{if } y \geq m^{min}(X) \text{ and } y \neq y_R \\
     \Gamma      & \text{if } y < m^{min}(X) \text{ and } y \neq y_R \\
     1           & \text{if } y = y_R 
-  \end{array}
-  \right.
+  \end{cases}
   ```
 
   The weights $w^{max}$ and $w^{min}$ make the conditional counterfactual mean $E[Y_1^{(0)} \mid A=1, X]$ as large or as small as possible subject to the constraint (1). Consequently, they produce the lower and upper bounds of the ATT. The condition $w^{max}(y_R,X)=w^{min}(y_R,X)=1$ enforces the boundary constraint $\alpha(y_R,X)=1$.
@@ -117,33 +113,29 @@ When the outcome is **continuous**, we implement the following algorithm in orde
 * The cutoff values $m^{max}(X)$ and $m^{min}(X)$ are the roots for the equations:
 
   ```math
-  m^{max}(X) = \frac{\displaystyle{ E[ Y_1\,\alpha_1^{LB}(Y_1,X) \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
+  m^{max}(X) = \frac{E[ Y_1\,\alpha_1^{LB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} 
   ```
 
   ```math
-  m^{min}(X) = \frac{\displaystyle{ E[ Y_1\,\alpha_1^{UB}(Y_1,X) \mid A=0,X] } }{\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} }  
+  m^{min}(X) = \frac{E[ Y_1\,\alpha_1^{UB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]}  
   ```
 
 When the outcome is **binary**, the reference value is fixed to $y_R = 0$. Therefore,
 
 ```math
 \alpha_1^{LB}(y,X) =
-\left\{
-\begin{array}{ll}
+\begin{cases}
   1                           & \text{if } y = 0 \\
   \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
-\end{array}
-\right.
+\end{cases}
 ```
 
 ```math
 \alpha_1^{UB}(y,X) =
-\left\{
-\begin{array}{ll}
+\begin{cases}
   1                               & \text{if } y = 0 \\
   \Gamma^{-1} \cdot \alpha_0(1,X) & \text{if } y = 1
-\end{array}
-\right.
+\end{cases}
 ```
 
 Based on $\alpha_1^{LB}(y,X)$ and $\alpha_1^{UB}(y,X)$, we obtain the lower and upper bounds on the ATT and their standard errors.
