@@ -16,27 +16,27 @@ install_github("qkrcks0218/UDID")
 
 Consider a panel study with two time periods $t \in \\{0, 1\\}$, where $t = 0$ is pre-treatment and $t = 1$ is post-treatment. Let $A \in \\{0, 1\\}$ be a binary treatment indicator, $Y_t$ the observed outcome at time $t$, $Y_t(a)$ the potential outcome at time $t$ under treatment $A = a$, and $X \in \mathbb{R}^d$ a vector of pre-treatment covariates. The target estimand is the **average treatment effect on the treated (ATT)**:
 
-$$\tau = E \left[Y_1(1) - Y_1(0) \mid A = 1\right].$$
+$$\tau = E \left[Y_1^{(1)} - Y_1^{(0)} \mid A = 1\right].$$
 
-Under consistency ($Y_t = Y_t(A)$ a.s.) and no anticipation ($Y_0(0) = Y_0(1)$ a.s.), the first term $E[Y_1(1) \mid A=1]$ is directly identified from the data. The key challenge is identifying the counterfactual mean $E[Y_1(0) \mid A=1]$.
+Under consistency ($Y_t = Y_t(A)$ a.s.) and no anticipation ($Y_0^{(0)} = Y_0^{(0)}$ a.s.), the first term $E[Y_1^{(0)} \mid A=1]$ is directly identified from the data. The key challenge is identifying the counterfactual mean $E[Y_1^{(0)} \mid A=1]$.
 
 ### Odds Ratio Equi-Confounding (OREC) Assumption
 
-Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t(0)$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in \\{ 0, 1 \\}$, define the **generalized odds ratio function**:
+Let $f_t(y \mid a, x)$ denote the conditional density of $Y_t^{(0)}$ given $A = a$ and $X = x$, and fix a reference value $y_R$ satisfying $(y_R, x) \in \mathcal{S}$ (the common support). For each $t \in \\{ 0, 1 \\}$, define the **generalized odds ratio function**:
 
 $$\alpha_t(y, x) = \frac{f_t(y \mid A=1,   X=x)}{f_t(y_R \mid A=1,   X=x)} \cdot \frac{f_t(y_R \mid A=0,   X=x)}{f_t(y \mid A=0,   X=x)}.$$
 
-By construction, $\alpha_t(y_R, x) = 1$ for all $x$, and $\alpha_t(y, x) = 1$ for all $(y, x)$ whenever $Y_t(0) \perp\perp A \mid X$.
+By construction, $\alpha_t(y_R, x) = 1$ for all $x$, and $\alpha_t(y, x) = 1$ for all $(y, x)$ whenever $Y_t^{(0)} \perp\perp A \mid X$.
 
 The key assumption of the UDID framework is **odds ratio equi-confounding (OREC)**, which states that
 
 $$\alpha_0(y, x) = \alpha_1(y, x) \quad \text{for all } (y, x) \in \mathcal{S}.$$
 
-In other words, the generalized odds ratio function is stable across time periods. Intuitively, OREC states that the degree of unmeasured confounding between treatment $A$ and the treatment-free potential outcome $Y_t(0)$—measured on the odds ratio scale—does not change from the pre-treatment period to the post-treatment period. This is a distributional analogue of the classical parallel trends assumption, but is scale-invariant and compatible with continuous, binary, or mixed-type outcomes.
+In other words, the generalized odds ratio function is stable across time periods. Intuitively, OREC states that the degree of unmeasured confounding between treatment $A$ and the treatment-free potential outcome $Y_t^{(0)}$—measured on the odds ratio scale—does not change from the pre-treatment period to the post-treatment period. This is a distributional analogue of the classical parallel trends assumption, but is scale-invariant and compatible with continuous, binary, or mixed-type outcomes.
 
 ### ATT Identification
 
-Under OREC, the counterfactual mean $\mu(x) = E[Y_1(0) \mid A=1, X=x]$ is identified as:
+Under OREC, the counterfactual mean $\mu(x) = E[Y_1^{(0)} \mid A=1, X=x]$ is identified as:
 
 $$\mu(x) = \frac{E \left[Y_1  \alpha_0(Y_1, X) \mid A=0,   X=x\right]}{E \left[\alpha_0(Y_1, X) \mid A=0,   X=x\right]},$$
 
@@ -77,6 +77,88 @@ In each fold, nuisance functions are estimated on one half of the data and evalu
 **Binary outcomes.** All conditional distributions, $\Pr(A=1 \mid X)$, $\Pr(Y_0=1 \mid A, X)$, and $\Pr(Y_1=1 \mid A=0, X)$, are estimated via Super Learner.
 
 Given the estimated nuisance functions, $\hat{\alpha}_1$, $\hat{\beta}_1$, $\hat{\mu}$, and $\hat{R}$ are constructed from the estimated densities and density ratios, and plugged into the EIF to obtain $\hat{\tau}$.
+
+### Sensitivity Analysis
+
+ For sensitivity analysis, given the sensitivity parameter $\Gamma \geq 1$,
+ we allow
+ $$
+  \frac{ 
+  \displaystyle{\alpha_1(y,x)}
+  }{
+  \displaystyle{\alpha_0(y,x)}
+  }
+    \in
+   \left[\Gamma^{-1} ,  \Gamma  \right].
+   \qquad \qquad (1)
+ $$
+ When the outcome is **continuous**, we implement the following algorithm 
+ in order to compute the maximum and minimum deviations.
+ * For each $X$, define $\alpha_1^{LB}(y,X) := w^{max}(y,X)\,\alpha_0(y,X)}
+   and $\alpha_1^{UB}(y,X) := w^{min}(y,X)\,\alpha_0(y,X)$, where
+   $$
+     w^{max}(y,X) =
+     \left\{
+     \begin{array}{ll}
+       \Gamma      & \text{if } y \geq m^{max}(X) \text{ and } y \neq y_R \\
+       \Gamma^{-1} & \text{if } y <    m^{max}(X) \text{ and } y \neq y_R \\
+       1           & \text{if } y = y_R 
+     \end{array}
+     \right. 
+     $$
+    $$
+     w^{min}(y,X) =
+     \left\{
+     \begin{array}{ll}
+       \Gamma^{-1} & \text{if } y \geq m^{min}(X) \text{ and } y \neq y_R \\
+       \Gamma      & \text{if } y <    m^{min}(X) \text{ and } y \neq y_R \\
+       1           & \text{if } y = y_R 
+     \end{array}
+     \right.
+     $$
+     The weights $w^{max}$ and $w^{min}$ make the conditional
+ counterfactual mean $E[Y_1^{(0)} \mid A=1, X]$ as large or as
+ small as possible subject to the constraint
+ (1). Consequently, they produce the
+ lower and upper bounds of the ATT. The condition
+ $w^{max}(y_R,X)=w^{min}(y_R,X)=1$ enforces the boundary
+ constraint $\alpha(y_R,X)=1$.
+ 
+ * The cutoff values $m^{max}(X)$ and $m^{min}(X)$ are the roots for the equations:
+   $$
+     m^{max}(X) = 
+     \frac{\displaystyle{  E[ Y_1\,\alpha_1^{LB}(Y_1,X)  \mid A=0,X] } }
+     {\displaystyle{ E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} } 
+   $$
+   $$ 
+     m^{min}(X) = 
+     \frac{\displaystyle{  E[ Y_1\,\alpha_1^{UB}(Y_1,X)  \mid A=0,X] } }
+     {\displaystyle{ E[\alpha_1^{UB}(Y_1,X) \mid A=0,X]} }  
+   $$
+
+ When the outcome is **binary**, the reference value is fixed to
+ $y_R = 0$. Therefore,
+ $$
+   \alpha_1^{LB}(y,X) =
+   \left\{
+   \begin{array}{ll}
+     1                           & \text{if } y = 0 \\
+     \Gamma \cdot \alpha_0(1,X)  & \text{if } y = 1
+   \end{array}
+   \right.
+   $$
+   $$
+   \alpha_1^{UB}(y,X) =
+   \left\{
+   \begin{array}{ll}
+     1                               & \text{if } y = 0 \\
+     \Gamma^{-1} \cdot \alpha_0(1,X) & \text{if } y = 1
+   \end{array}
+   \right.
+   $$
+
+ Based on $\alpha_1^{LB}(y,X)$ and $\alpha_1^{UB}(y,X)$, we obtain
+ the lower and upper bounds on the ATT and their standard errors.
 
 ## Example usage
 
