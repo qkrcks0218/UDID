@@ -88,7 +88,7 @@ For sensitivity analysis, given the sensitivity parameter $\Gamma \geq 1$, we al
 
 When the outcome is **continuous**, we implement the following algorithm in order to compute the maximum and minimum deviations.
 
-* For each $X$, define $\alpha_1^{LB}(y,X) := w^{max}(y,X) \cdot \alpha_0(y,X)$ and $\alpha_1^{UB}(y,X) := w^{min}(y,X) \cdot \alpha_0(y,X)$, where
+For each $X$, define $\alpha_1^{LB}(y,X) := w^{max}(y,X) \cdot \alpha_0(y,X)$ and $\alpha_1^{UB}(y,X) := w^{min}(y,X) \cdot \alpha_0(y,X)$, where
 
   ```math
   w^{max}(y,X) =
@@ -110,7 +110,7 @@ When the outcome is **continuous**, we implement the following algorithm in orde
 
   The weights $w^{max}$ and $w^{min}$ make the conditional counterfactual mean $E[Y_1^{(0)} \mid A=1, X]$ as large or as small as possible subject to the constraint (1). Consequently, they produce the lower and upper bounds of the ATT. The condition $w^{max}(y_R,X)=w^{min}(y_R,X)=1$ enforces the boundary constraint $\alpha(y_R,X)=1$.
 
-* The cutoff values $m^{max}(X)$ and $m^{min}(X)$ are the roots for the equations:
+The cutoff values $m^{max}(X)$ and $m^{min}(X)$ are the roots for the equations:
 
   $$
   m^{max}(X) = \frac{E[ Y_1\,\alpha_1^{LB}(Y_1,X) \mid A=0,X]}{E[\alpha_1^{LB}(Y_1,X) \mid A=0,X]} 
